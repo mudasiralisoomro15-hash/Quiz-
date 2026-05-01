@@ -10,192 +10,66 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Sora', sans-serif; background: #040408; min-height: 100vh; }
+        body { font-family: 'Sora', sans-serif; background: #040408; min-height: 100vh; overflow-x: hidden; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0a0a14; }
         ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 3px; }
 
         @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
         @keyframes pulse { 0%,100% { opacity:.6; } 50% { opacity:1; } }
-        @keyframes spin { to { transform:rotate(360deg); } }
-        @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
-        @keyframes glow { 0%,100% { box-shadow: 0 0 20px rgba(99,102,241,0.3); } 50% { box-shadow: 0 0 40px rgba(168,85,247,0.5); } }
+        @keyframes glow { 0%,100% { box-shadow: 0 0 20px rgba(99,102,241,0.2); } 50% { box-shadow: 0 0 40px rgba(168,85,247,0.4); } }
+        
+        .fade-up { animation: fadeUp 0.5s ease both; }
+        .bg-grid {
+            background-color: #040408;
+            background-image: linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .glass-strong {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            animation: glow 4s ease-in-out infinite;
+        }
+        .btn-primary {
+            width: 100%; padding: 14px;
+            border-radius: 14px; border: none;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            color: white; font-weight: 700; cursor: pointer; transition: 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.3); }
+        .input-field {
+            width: 100%; padding: 14px; border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05); color: white; outline: none; margin-bottom: 20px;
+        }
+        .opt-btn {
+            width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            color: white; text-align: left; cursor: pointer; transition: 0.2s;
+        }
+        .opt-btn.selected { background: rgba(99,102,241,0.2); border-color: #6366f1; }
     </style>
 </head>
-<body>
+<body class="bg-grid">
     <div id="root"></div>
+
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect } = React;
 
         const ADMIN_PASSWORD = "admin786";
-        const SK_R = "qr_v10";
-        const SK_Q = "qq_v10";
-        const SK_L = "ql_v10";
+        const SK_R = "qr_v11", SK_Q = "qq_v11", SK_L = "ql_v11";
 
         const DEFAULT_QUESTIONS = [
             { id: 1, q: "Pakistan ka qoumi khel kaunsa hai?", a: "Cricket", b: "Hockey", c: "Football", d: "Kabaddi", ans: "b" },
-            { id: 2, q: "Pakistan ka darul hukumat?", a: "Lahore", b: "Karachi", c: "Islamabad", d: "Peshawar", ans: "c" },
-            { id: 3, q: "Photosynthesis mein kaun si gas release hoti hai?", a: "CO2", b: "N2", c: "O2", d: "H2", ans: "c" },
-            { id: 4, q: "Human body mein kitni bones hoti hain?", a: "196", b: "206", c: "216", d: "186", ans: "b" },
+            { id: 2, q: "MDCAT: Mitochondria ka main function kya hai?", a: "Protein synthesis", b: "Energy production", c: "Waste removal", d: "DNA storage", ans: "b" }
         ];
 
         const loadS = (key, fb) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb; } catch { return fb; } };
         const saveS = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
-
-        // ── Shared Styles ──
-        const css = `
-            .fade-up { animation: fadeUp 0.5s ease both; }
-            .bg-grid {
-                background-color: #040408;
-                background-image: linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
-                                  linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
-                background-size: 40px 40px;
-            }
-            .glass {
-                background: rgba(255,255,255,0.03);
-                border: 1px solid rgba(255,255,255,0.08);
-                border-radius: 24px;
-                backdrop-filter: blur(20px);
-            }
-            .glass-strong {
-                background: rgba(99,102,241,0.06);
-                border: 1px solid rgba(99,102,241,0.2);
-                border-radius: 24px;
-                backdrop-filter: blur(30px);
-                animation: glow 3s ease-in-out infinite;
-            }
-            .btn-primary {
-                width: 100%; padding: 14px 24px;
-                border-radius: 14px; border: none;
-                background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-                color: white; font-weight: 700; font-size: 15px;
-                font-family: 'Sora', sans-serif;
-                cursor: pointer; transition: all 0.2s ease;
-                position: relative; overflow: hidden;
-            }
-            .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.4); }
-            .btn-primary:active { transform: translateY(0); }
-            .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-            .btn-secondary {
-                padding: 10px 20px; border-radius: 12px;
-                border: 1px solid rgba(255,255,255,0.12);
-                background: rgba(255,255,255,0.05);
-                color: rgba(255,255,255,0.7); font-family: 'Sora', sans-serif;
-                font-size: 13px; cursor: pointer; transition: all 0.2s;
-            }
-            .btn-secondary:hover { background: rgba(255,255,255,0.1); color: white; }
-            .btn-danger {
-                padding: 10px 20px; border-radius: 12px;
-                border: 1px solid rgba(239,68,68,0.3);
-                background: rgba(239,68,68,0.1);
-                color: #f87171; font-family: 'Sora', sans-serif;
-                font-size: 13px; cursor: pointer; transition: all 0.2s;
-            }
-            .btn-danger:hover { background: rgba(239,68,68,0.2); }
-            .input-field {
-                width: 100%; padding: 14px 18px;
-                border-radius: 14px;
-                border: 1px solid rgba(255,255,255,0.1);
-                background: rgba(255,255,255,0.04);
-                color: white; font-family: 'Sora', sans-serif; font-size: 14px;
-                outline: none; transition: all 0.2s;
-            }
-            .input-field:focus { border-color: rgba(99,102,241,0.5); background: rgba(99,102,241,0.06); }
-            .input-field::placeholder { color: rgba(255,255,255,0.3); }
-            .opt-btn {
-                width: 100%; padding: 14px 18px; margin: 6px 0;
-                border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);
-                background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.85);
-                text-align: left; cursor: pointer;
-                font-family: 'Sora', sans-serif; font-size: 14px;
-                transition: all 0.2s ease; display: flex; align-items: center; gap: 12px;
-            }
-            .opt-btn:hover { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.3); color: white; }
-            .opt-btn.selected {
-                background: rgba(99,102,241,0.15);
-                border-color: #6366f1;
-                color: white;
-                box-shadow: 0 0 20px rgba(99,102,241,0.2);
-            }
-            .opt-label {
-                width: 28px; height: 28px; border-radius: 8px;
-                background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
-                display: flex; align-items: center; justify-content: center;
-                font-size: 11px; font-weight: 700; color: #818cf8;
-                flex-shrink: 0; font-family: 'JetBrains Mono', monospace;
-            }
-            .opt-btn.selected .opt-label { background: #6366f1; color: white; border-color: #6366f1; }
-            .tab-btn {
-                flex: 1; padding: 12px; border-radius: 12px; border: none;
-                font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600;
-                cursor: pointer; transition: all 0.2s;
-            }
-            .tab-btn.active {
-                background: linear-gradient(135deg, #6366f1, #a855f7);
-                color: white;
-            }
-            .tab-btn.inactive {
-                background: rgba(255,255,255,0.04);
-                color: rgba(255,255,255,0.5);
-                border: 1px solid rgba(255,255,255,0.08);
-            }
-            .tab-btn.inactive:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); }
-            .stat-card {
-                background: rgba(255,255,255,0.03);
-                border: 1px solid rgba(255,255,255,0.07);
-                border-radius: 16px; padding: 20px;
-                text-align: center;
-            }
-            .ai-loading {
-                display: flex; align-items: center; gap: 10px;
-                color: #818cf8; font-size: 13px;
-                animation: pulse 1.5s ease infinite;
-            }
-            .spinner {
-                width: 18px; height: 18px; border: 2px solid rgba(99,102,241,0.3);
-                border-top-color: #6366f1; border-radius: 50%;
-                animation: spin 0.8s linear infinite;
-            }
-            .score-ring {
-                width: 120px; height: 120px; border-radius: 50%;
-                background: conic-gradient(#6366f1 var(--pct), rgba(255,255,255,0.05) 0);
-                display: flex; align-items: center; justify-content: center;
-                margin: 0 auto 20px;
-                box-shadow: 0 0 40px rgba(99,102,241,0.3);
-                position: relative;
-            }
-            .score-inner {
-                width: 90px; height: 90px; border-radius: 50%;
-                background: #040408; display: flex; flex-direction: column;
-                align-items: center; justify-content: center;
-            }
-            .badge {
-                display: inline-flex; align-items: center; gap: 6px;
-                padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 600;
-            }
-            .badge-green { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
-            .badge-yellow { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
-            .badge-red { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
-            .result-row {
-                display: grid; grid-template-columns: 1fr auto auto auto;
-                gap: 12px; align-items: center;
-                padding: 16px 20px; border-radius: 14px;
-                background: rgba(255,255,255,0.02);
-                border: 1px solid rgba(255,255,255,0.05);
-                margin-bottom: 8px; transition: all 0.2s;
-            }
-            .result-row:hover { background: rgba(255,255,255,0.04); border-color: rgba(99,102,241,0.2); }
-            .progress-bar {
-                height: 6px; border-radius: 3px;
-                background: rgba(255,255,255,0.06);
-                overflow: hidden; margin-top: 6px;
-            }
-            .progress-fill {
-                height: 100%; border-radius: 3px;
-                background: linear-gradient(90deg, #6366f1, #a855f7);
-                transition: width 0.8s ease;
-            }
-        `;
 
         function App() {
             const [screen, setScreen] = useState("home");
@@ -209,170 +83,151 @@
             const [adminPass, setAdminPass] = useState("");
             const [adminView, setAdminView] = useState("results");
             const [clicks, setClicks] = useState(0);
-            const [aiPrompt, setAiPrompt] = useState("");
-            const [aiLoading, setAiLoading] = useState(false);
-            const [aiStatus, setAiStatus] = useState("");
-            const [lastScore, setLastScore] = useState(null);
-            const [wrongPass, setWrongPass] = useState(false);
+            const [bulkText, setBulkText] = useState("");
 
-            // Always load fresh results from localStorage
             useEffect(() => {
                 setQuestions(loadS(SK_Q, DEFAULT_QUESTIONS));
                 setResults(loadS(SK_R, []));
                 setDisplayLimit(loadS(SK_L, 10));
             }, []);
 
-            // Re-load results every time admin screen opens
-            useEffect(() => {
-                if (screen === "admin") {
-                    setResults(loadS(SK_R, []));
-                }
-            }, [screen]);
+            const secretClick = () => { setClicks(c => { if(c+1 >= 5) { setScreen("login"); return 0; } return c+1; }); };
+            
+            const startQuiz = () => { if(!name.trim()) return; setCurrent(0); setAnswers({}); setScreen("quiz"); };
 
-            const secretClick = () => {
-                setClicks(c => {
-                    if (c + 1 >= 5) { setScreen("login"); return 0; }
-                    return c + 1;
-                });
-            };
-
-            const finishQuiz = (finalAnswers) => {
+            const finishQuiz = (finalAns) => {
                 let score = 0;
-                const activeQs = questions.slice(0, displayLimit);
-                activeQs.forEach((q, i) => { if (finalAnswers[i] === q.ans) score++; });
-                const pct = Math.round((score / Math.min(displayLimit, questions.length)) * 100);
-                const total = Math.min(displayLimit, questions.length);
-                const entry = {
-                    name: name.trim(), score, total, percentage: pct,
-                    time: new Date().toLocaleString('ur-PK')
-                };
-                // Load latest results fresh and append
-                const latest = loadS(SK_R, []);
-                const updated = [...latest, entry];
-                setResults(updated);
-                saveS(SK_R, updated);
-                setLastScore({ score, total, pct });
+                const limit = Math.min(displayLimit, questions.length);
+                const activeQs = questions.slice(0, limit);
+                activeQs.forEach((q, i) => { if(finalAns[i] === q.ans) score++; });
+                const pct = Math.round((score / limit) * 100);
+                
+                const entry = { name: name.trim(), score, total: limit, percentage: pct, time: new Date().toLocaleString() };
+                const updatedResults = [...results, entry];
+                setResults(updatedResults);
+                saveS(SK_R, updatedResults);
                 setScreen("done");
             };
 
             const next = () => {
-                const na = { ...answers, [current]: selected };
-                setAnswers(na);
-                setSelected(null);
+                const na = {...answers, [current]: selected}; setAnswers(na); setSelected(null);
                 const limit = Math.min(displayLimit, questions.length);
-                if (current + 1 < limit) { setCurrent(c => c + 1); }
-                else { finishQuiz(na); }
+                if(current + 1 < limit) setCurrent(c => c + 1);
+                else finishQuiz(na);
             };
 
-            const startQuiz = () => {
-                setCurrent(0); setAnswers({}); setSelected(null);
-                setScreen("quiz");
-            };
-
-            const clearResults = () => {
-                if (window.confirm("Sare results delete karna chahte hain?")) {
-                    saveS(SK_R, []);
-                    setResults([]);
-                }
-            };
-
-            // ── AI Quiz Generator ──
-            const generateWithAI = async () => {
-                if (!aiPrompt.trim()) return;
-                setAiLoading(true);
-                setAiStatus("AI se sawal ban rahe hain...");
+            const handleBulkImport = () => {
                 try {
-                    const count = displayLimit || 10;
-                    const systemPrompt = `You are an expert MDCAT/medical quiz maker. Generate exactly ${count} multiple-choice questions.
-STRICT FORMAT (one question per line, pipe-separated, NO extra text, NO numbering, NO markdown):
-Question text|Option A|Option B|Option C|Option D|correct_letter
-correct_letter must be lowercase: a, b, c, or d
-Example: What is the powerhouse of the cell?|Nucleus|Mitochondria|Ribosome|Golgi Body|b`;
-
-                    const response = await fetch("https://api.anthropic.com/v1/messages", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            model: "claude-sonnet-4-20250514",
-                            max_tokens: 4000,
-                            system: systemPrompt,
-                            messages: [{ role: "user", content: `Generate ${count} MCQs about: ${aiPrompt}` }]
-                        })
-                    });
-
-                    const data = await response.json();
-                    const text = data.content?.map(b => b.text || "").join("\n") || "";
-                    const lines = text.split('\n').filter(l => l.includes('|') && l.split('|').length === 6);
-
-                    if (lines.length === 0) throw new Error("No valid questions found");
-
+                    const lines = bulkText.split('\n').filter(l => l.trim() !== "");
                     const newQs = lines.map((line, i) => {
-                        const parts = line.split('|');
-                        return {
-                            id: Date.now() + i,
-                            q: parts[0]?.trim(),
-                            a: parts[1]?.trim(),
-                            b: parts[2]?.trim(),
-                            c: parts[3]?.trim(),
-                            d: parts[4]?.trim(),
-                            ans: parts[5]?.trim().toLowerCase()
-                        };
-                    }).filter(q => q.q && q.a && q.b && q.c && q.d && ['a','b','c','d'].includes(q.ans));
-
-                    if (newQs.length === 0) throw new Error("Parsing failed");
-
-                    setQuestions(newQs);
-                    saveS(SK_Q, newQs);
-                    const newLimit = Math.min(displayLimit, newQs.length);
-                    setDisplayLimit(newLimit);
-                    saveS(SK_L, newLimit);
-                    setAiStatus(`✅ ${newQs.length} sawal successfully ban gaye!`);
-                    setAiPrompt("");
-                } catch (err) {
-                    setAiStatus("❌ Error: " + err.message + " — Dobara try karein");
-                } finally {
-                    setAiLoading(false);
-                }
+                        const [q, a, b, c, d, ans] = line.split('|');
+                        return { id: Date.now() + i, q:q.trim(), a:a.trim(), b:b.trim(), c:c.trim(), d:d.trim(), ans:ans.trim().toLowerCase() };
+                    });
+                    setQuestions(newQs); saveS(SK_Q, newQs);
+                    setBulkText(""); alert("AI Quiz Updated!");
+                } catch(e) { alert("Format galti! Question|A|B|C|D|ans use karein."); }
             };
 
-            // ── Screens ──
-
-            if (screen === "home") return (
-                <div className="bg-grid" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-                    <style>{css}</style>
-                    <div className="glass-strong fade-up" style={{ width: "100%", maxWidth: 420, padding: 40, textAlign: "center" }}>
-                        {/* Logo */}
-                        <div style={{ width: 64, height: 64, borderRadius: 20, background: "linear-gradient(135deg,#6366f1,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: 28 }}>📝</div>
-                        <h1 style={{ color: "white", fontSize: 28, fontWeight: 800, letterSpacing: "-0.5px", marginBottom: 8 }}>Smart Quiz</h1>
-                        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginBottom: 32 }}>Apna naam likhein aur quiz shuru karein</p>
-                        <input
-                            className="input-field"
-                            placeholder="Aapka naam..."
-                            style={{ marginBottom: 16 }}
-                            onChange={e => setName(e.target.value)}
-                            onKeyDown={e => e.key === "Enter" && name.trim() && startQuiz()}
-                        />
-                        <button className="btn-primary" onClick={startQuiz} disabled={!name.trim()}>
-                            Quiz Shuru Karein →
-                        </button>
-                        <div onClick={secretClick} style={{ marginTop: 48, color: "#040408", userSelect: "none", cursor: "default", fontSize: 10 }}>● ● ●</div>
+            if(screen === "home") return (
+                <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:20}}>
+                    <div className="glass-strong fade-up" style={{width:"100%", maxWidth:400, textAlign:"center"}}>
+                        <h1 style={{color:"white", fontSize:32, marginBottom:10}}>Welcome!</h1>
+                        <p style={{color:"#888", marginBottom:30}}>Enter your name to start</p>
+                        <input className="input-field" placeholder="Full Name..." onChange={e=>setName(e.target.value)} />
+                        <button className="btn-primary" onClick={startQuiz}>Quiz Shuru Karein →</button>
+                        <div onClick={secretClick} style={{marginTop:40, opacity:0.01, cursor:"default"}}>● ● ●</div>
                     </div>
                 </div>
             );
 
-            if (screen === "login") return (
-                <div className="bg-grid" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-                    <style>{css}</style>
-                    <div className="glass fade-up" style={{ width: "100%", maxWidth: 380, padding: 40 }}>
-                        <div style={{ fontSize: 36, marginBottom: 16 }}>🛡️</div>
-                        <h2 style={{ color: "white", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Admin Login</h2>
-                        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginBottom: 28 }}>Admin panel access ke liye password enter karein</p>
-                        <input className="input-field" type="password" placeholder="Password..." style={{ marginBottom: wrongPass ? 8 : 16 }}
-                            onChange={e => { setAdminPass(e.target.value); setWrongPass(false); }}
-                            onKeyDown={e => { if(e.key==="Enter") { if(adminPass===ADMIN_PASSWORD) setScreen("admin"); else setWrongPass(true); }}}
-                        />
-                        {wrongPass && <p style={{ color: "#f87171", fontSize: 12, marginBottom: 16 }}>❌ Galat password!</p>}
-                        <button className="btn-primary" onClick={() => { if(adminPass===ADMIN_PASSWORD) setScreen("admin"); else setWrongPass(true); }}>
-                            Login
-                        </button>
-                        <button className="btn-secondary" style={{ widt
+            if(screen === "login") return (
+                <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh"}}>
+                    <div className="glass-strong" style={{width:320}}>
+                        <h2 style={{color:"white", marginBottom:20}}>Admin Panel</h2>
+                        <input className="input-field" type="password" placeholder="Password..." onChange={e=>setAdminPass(e.target.value)} />
+                        <button className="btn-primary" onClick={() => adminPass === ADMIN_PASSWORD && setScreen("admin")}>Login</button>
+                    </div>
+                </div>
+            );
+
+            if(screen === "quiz") return (
+                <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:20}}>
+                    <div className="glass-strong fade-up" style={{width:"100%", maxWidth:600}}>
+                        <p style={{color:"#6366f1", marginBottom:10}}>Question {current+1} of {Math.min(displayLimit, questions.length)}</p>
+                        <h3 style={{color:"white", marginBottom:25, fontSize:20}}>{questions[current]?.q}</h3>
+                        {['a','b','c','d'].map(o => (
+                            <button key={o} className={`opt-btn ${selected===o?'selected':''}`} onClick={()=>setSelected(o)}>
+                                <span style={{marginRight:10, color:"#6366f1"}}>{o.toUpperCase()}</span> {questions[current]?.[o]}
+                            </button>
+                        ))}
+                        <button className="btn-primary" style={{marginTop:20}} onClick={next} disabled={!selected}>Next →</button>
+                    </div>
+                </div>
+            );
+
+            if(screen === "done") return (
+                <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", textAlign:"center"}}>
+                    <div className="glass-strong fade-up">
+                        <h1 style={{color:"#4ade80", fontSize:40}}>Shukriya!</h1>
+                        <p style={{color:"white", margin:"20px 0"}}>{name}, aapka quiz save ho gaya hai.</p>
+                        <p style={{color:"#888", marginBottom:30}}>Results group mein send kar diye jayenge.</p>
+                        <button className="btn-primary" onClick={()=>window.location.reload()}>دوسرا شخص →</button>
+                    </div>
+                </div>
+            );
+
+            if(screen === "admin") return (
+                <div style={{padding:40, color:"white"}}>
+                    <div style={{maxWidth:900, margin:"auto"}}>
+                        <div style={{display:"flex", justifyContent:"space-between", marginBottom:30}}>
+                            <h2>🛡️ Control Panel</h2>
+                            <button className="btn-primary" style={{width:"auto", padding:"8px 20px"}} onClick={()=>setScreen("home")}>Logout</button>
+                        </div>
+                        <div style={{display:"flex", gap:10, marginBottom:30}}>
+                            <button className="opt-btn" style={{margin:0}} onClick={()=>setAdminView("results")}>View Results</button>
+                            <button className="opt-btn" style={{margin:0}} onClick={()=>setAdminView("ai")}>AI Bulk Import</button>
+                        </div>
+
+                        {adminView === "results" ? (
+                            <div className="glass-strong" style={{padding:20}}>
+                                <table style={{width:"100%", borderCollapse:"collapse"}}>
+                                    <thead>
+                                        <tr style={{borderBottom:"2px solid #222", color:"#6366f1"}}>
+                                            <th style={{padding:15, textAlign:"left"}}>Name</th>
+                                            <th style={{padding:15}}>Score</th>
+                                            <th style={{padding:15}}>Percentage</th>
+                                            <th style={{padding:15, textAlign:"right"}}>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {results.map((r,i) => (
+                                            <tr key={i} style={{borderBottom:"1px solid #222"}}>
+                                                <td style={{padding:15}}>{r.name}</td>
+                                                <td style={{padding:15, textAlign:"center"}}>{r.score}/{r.total}</td>
+                                                <td style={{padding:15, textAlign:"center", color:"#4ade80"}}>{r.percentage}%</td>
+                                                <td style={{padding:15, textAlign:"right", color:"#555"}}>{r.time}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="glass-strong">
+                                <h3>AI Bulk Import</h3>
+                                <textarea className="input-field" style={{height:200, marginTop:15}} 
+                                    placeholder="Question|OptionA|OptionB|OptionC|OptionD|ans"
+                                    value={bulkText} onChange={e=>setBulkText(e.target.value)} />
+                                <button className="btn-primary" onClick={handleBulkImport}>Save All Questions</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+
