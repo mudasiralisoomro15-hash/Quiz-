@@ -49,7 +49,7 @@
           { id: 30, q: "Pakistan ka sabse bara shehar surface area mein kaunsa hai?", a: "Karachi", b: "Lahore", c: "Quetta", d: "Hyderabad", ans: "a" },
         ];
 
-        const SK_R = "qr_v5", SK_Q = "qq_v5", SK_L = "ql_v5";
+        const SK_R = "qr_v6", SK_Q = "qq_v6", SK_L = "ql_v6";
         const loadS = (key, fb) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb; } catch { return fb; } };
         const saveS = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
 
@@ -68,6 +68,7 @@
           const [adminError, setAdminError] = useState(false);
           const [adminView, setAdminView] = useState("results");
           const [clicks, setClicks] = useState(0);
+          const [editQ, setEditQ] = useState(null);
 
           useEffect(() => {
             setQuestions(loadS(SK_Q, DEFAULT_QUESTIONS));
@@ -88,14 +89,13 @@
             }
           };
 
-          const saveLimit = (val) => { const n = parseInt(val); setDisplayLimit(n); saveS(SK_L, n); };
+          const saveQuestion = (qObj) => { const u = questions.map(q => q.id === qObj.id ? qObj : q); setQuestions(u); saveS(SK_Q, u); setEditQ(null); };
 
           const G = `
-            *{box-sizing:border-box;margin:0;padding:0;font-family:'DM Sans',sans-serif;}
-            @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-            .card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:24px; backdrop-filter:blur(20px); padding:40px; color:#fff; width:100%; max-width:460px; text-align:center; animation:fadeUp 0.4s ease; }
+            *{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif;}
+            .card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:40px; color:#fff; width:100%; max-width:460px; text-align:center; }
             .btn { width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(135deg, #6366f1, #8b5cf6); color:white; font-size:16px; font-weight:600; cursor:pointer; margin-top:10px; }
-            .input { width:100%; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; margin-bottom:20px; outline:none; }
+            .input { width:100%; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; margin-bottom:20px; }
             .opt-btn { width:100%; padding:14px; margin-bottom:10px; border-radius:12px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#cbd5e1; }
           `;
 
@@ -107,7 +107,7 @@
                 <p style={{color:"#9ca3af", marginBottom:"30px"}}>Apna naam likhein aur quiz shuru karein</p>
                 <input className="input" placeholder="Your Name..." value={name} onChange={e=>setName(e.target.value)} />
                 <button className="btn" onClick={startQuiz}>Quiz Shuru Karein →</button>
-                <div style={{marginTop:"30px", color:"#111120", cursor:"pointer", userSelect:"none"}} onClick={secretClick}>● ● ●</div>
+                <div style={{marginTop:"30px", color:"#080810", userSelect:"none"}} onClick={secretClick}>● ● ●</div>
               </div>
             </div>
           );
@@ -120,7 +120,6 @@
                 <input className="input" type="password" placeholder="Password..." value={adminPass} onChange={e=>setAdminPass(e.target.value)} />
                 <button className="btn" onClick={()=>{if(adminPass===ADMIN_PASSWORD) setScreen(SCREEN.ADMIN); else setAdminError(true);}}>Login</button>
                 {adminError && <p style={{color:"#f87171", marginTop:"10px"}}>Wrong Password</p>}
-                <p style={{marginTop:"15px", color:"#6366f1", cursor:"pointer"}} onClick={()=>setScreen(SCREEN.HOME)}>Back</p>
               </div>
             </div>
           );
@@ -129,10 +128,6 @@
             <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
               <style>{G}</style>
               <div className="card" style={{maxWidth:"600px", textAlign:"left"}}>
-                <div style={{display:"flex", justifyContent:"space-between", marginBottom:"20px", color:"#9ca3af"}}>
-                  <span>👤 {name}</span>
-                  <span>{current+1} / {displayLimit}</span>
-                </div>
                 <h2 style={{marginBottom:"25px"}}>{questions[current]?.q}</h2>
                 {["a","b","c","d"].map(opt => (
                   <button key={opt} className="opt-btn" onClick={()=>setSelected(opt)} style={{border:selected===opt?"1px solid #6366f1":""}}>
@@ -140,7 +135,7 @@
                     {questions[current][opt]}
                   </button>
                 ))}
-                <button className="btn" onClick={next} disabled={!selected} style={{opacity:selected?1:0.5}}>Next →</button>
+                <button className="btn" onClick={next} disabled={!selected}>Next →</button>
               </div>
             </div>
           );
@@ -150,8 +145,9 @@
               <style>{G}</style>
               <div className="card">
                 <h1 style={{color:"#4ade80"}}>Shukriya!</h1>
-                <p style={{marginTop:"15px"}}>{name}, aapne quiz mukammal kar liya. Results shaam ko milenge.</p>
-                <button className="btn" onClick={()=>{setScreen(SCREEN.HOME);setName("");}}>Agla Shakhs →</button>
+                <p style={{marginTop:"15px", color:"#e2e8f0"}}>{name}, aapne quiz mukammal kar liya.</p>
+                <p style={{color:"#9ca3af", marginBottom:"25px"}}>Results group mein send kar diye jayenge.</p>
+                <button className="btn" onClick={()=>{setScreen(SCREEN.HOME);setName("");}}>دوسرا شخص →</button>
               </div>
             </div>
           );
@@ -161,38 +157,47 @@
               <div style={{maxWidth:"800px", margin:"0 auto", background:"rgba(255,255,255,0.05)", padding:"20px", borderRadius:"20px"}}>
                 <div style={{display:"flex", justifyContent:"space-between", marginBottom:"20px"}}>
                   <h2>🛡️ Admin Panel</h2>
-                  <button onClick={()=>setScreen(SCREEN.HOME)} style={{background:"#ef4444", color:"white", border:"none", padding:"8px 15px", borderRadius:"8px"}}>Logout</button>
+                  <div style={{display:"flex", gap:"10px"}}>
+                    <button onClick={()=>setAdminView("results")} className="btn" style={{padding:"8px 15px", margin:0}}>Results</button>
+                    <button onClick={()=>setAdminView("questions")} className="btn" style={{padding:"8px 15px", margin:0, background:"#4b5563"}}>Questions</button>
+                    <button onClick={()=>setScreen(SCREEN.HOME)} className="btn" style={{padding:"8px 15px", margin:0, background:"#ef4444"}}>Logout</button>
+                  </div>
                 </div>
-                <div style={{marginBottom:"30px", padding:"15px", background:"rgba(99,102,241,0.1)", borderRadius:"12px"}}>
-                   <label>Kitne Sawal Dikhane Hain? </label>
-                   <select value={displayLimit} onChange={(e)=>saveLimit(e.target.value)} style={{padding:"8px", borderRadius:"6px", marginLeft:"10px", background:"#111", color:"white"}}>
-                      <option value="5">5 Sawal</option>
-                      <option value="10">10 Sawal</option>
-                      <option value="20">20 Sawal</option>
-                      <option value="30">30 Sawal (Full)</option>
-                   </select>
-                </div>
-                <table style={{width:"100%", borderCollapse:"collapse"}}>
-                  <thead style={{background:"rgba(255,255,255,0.1)"}}>
-                    <tr><th style={{padding:"10px"}}>Name</th><th style={{padding:"10px"}}>Score</th><th style={{padding:"10px"}}>Waqt</th></tr>
-                  </thead>
-                  <tbody>
-                    {results.map((r,i)=>(
-                      <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-                        <td style={{padding:"10px"}}>{r.name}</td>
-                        <td style={{padding:"10px"}}>{r.score}/{r.total}</td>
-                        <td style={{padding:"10px", color:"#9ca3af"}}>{r.time}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+
+                {adminView === "results" ? (
+                  <div>
+                    <select value={displayLimit} onChange={(e)=>{setDisplayLimit(e.target.value); saveS(SK_L, e.target.value);}} style={{padding:"8px", marginBottom:"20px", borderRadius:"8px"}}>
+                        <option value="5">5 Questions</option><option value="10">10 Questions</option><option value="20">20 Questions</option><option value="30">30 Questions</option>
+                    </select>
+                    <table style={{width:"100%"}}>
+                      <thead><tr style={{background:"rgba(255,255,255,0.1)"}}><th style={{padding:"10px"}}>Name</th><th style={{padding:"10px"}}>Score</th><th style={{padding:"10px"}}>Time</th></tr></thead>
+                      <tbody>{results.map((r,i)=>(<tr key={i}><td style={{padding:"10px"}}>{r.name}</td><td style={{padding:"10px"}}>{r.score}/{r.total}</td><td style={{padding:"10px"}}>{r.time}</td></tr>))}</tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div>
+                    {editQ ? (
+                        <div style={{background:"#111", padding:"20px", borderRadius:"12px"}}>
+                            <input className="input" value={editQ.q} onChange={e=>setEditQ({...editQ, q:e.target.value})} />
+                            {["a","b","c","d"].map(o=>(<input key={o} className="input" value={editQ[o]} onChange={e=>setEditQ({...editQ, [o]:e.target.value})} />))}
+                            <button className="btn" onClick={()=>saveQuestion(editQ)}>Save Changes</button>
+                            <button className="btn" style={{background:"#ef4444"}} onClick={()=>setEditQ(null)}>Cancel</button>
+                        </div>
+                    ) : (
+                        questions.map(q=>(
+                            <div key={q.id} style={{display:"flex", justifyContent:"space-between", padding:"10px", borderBottom:"1px solid #333"}}>
+                                <span>{q.q}</span>
+                                <button onClick={()=>setEditQ(q)} style={{background:"#6366f1", border:"none", color:"white", padding:"5px 10px", borderRadius:"5px"}}>Edit</button>
+                            </div>
+                        ))
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
         }
-
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
-
