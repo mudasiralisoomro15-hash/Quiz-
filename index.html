@@ -3,209 +3,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Portal</title>
+    <title>Smart Quiz Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-</head>
-<body style="margin: 0; padding: 0; background-color: #080810;">
-    <div id="root"></div>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Sora', sans-serif; background: #040408; min-height: 100vh; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a14; }
+        ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 3px; }
 
+        @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse { 0%,100% { opacity:.6; } 50% { opacity:1; } }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+        @keyframes glow { 0%,100% { box-shadow: 0 0 20px rgba(99,102,241,0.3); } 50% { box-shadow: 0 0 40px rgba(168,85,247,0.5); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         const ADMIN_PASSWORD = "admin786";
+        const SK_R = "qr_v10";
+        const SK_Q = "qq_v10";
+        const SK_L = "ql_v10";
 
         const DEFAULT_QUESTIONS = [
-          { id: 1, q: "Pakistan ka darul hukumat kaunsa shehar hai?", a: "Lahore", b: "Karachi", c: "Islamabad", d: "Peshawar", ans: "c" },
-          { id: 2, q: "Pakistan mein kitne sube hain?", a: "3", b: "4", c: "5", d: "6", ans: "b" },
-          { id: 3, q: "Pakistan ka qoumi khel kaunsa hai?", a: "Cricket", b: "Hockey", c: "Football", d: "Kabaddi", ans: "b" },
-          { id: 4, q: "Pakistan ki qoumi zaban kaunsi hai?", a: "Punjabi", b: "Sindhi", c: "Urdu", d: "Pashto", ans: "c" },
-          { id: 5, q: "Pakistan ka sabse bara shehar kaunsa hai?", a: "Islamabad", b: "Lahore", c: "Karachi", d: "Faisalabad", ans: "c" },
-          { id: 6, q: "Quaid-e-Azam ka poora naam kya tha?", a: "Muhammad Ali Jinnah", b: "Liaquat Ali Khan", c: "Iskander Mirza", d: "Yahya Khan", ans: "a" },
-          { id: 7, q: "Pakistan ka sabse uncha pahad kaunsa hai?", a: "Nanga Parbat", b: "Broad Peak", c: "K2", d: "Tirich Mir", ans: "c" },
-          { id: 8, q: "Pakistan ka qoumi phool kaunsa hai?", a: "Gulab", b: "Chameli", c: "Yasmin", d: "Sunflower", ans: "c" },
-          { id: 9, q: "Pakistan Independence Day kab manaya jata hai?", a: "23 March", b: "14 August", c: "6 September", d: "25 December", ans: "b" },
-          { id: 10, q: "Allama Iqbal ka yom paidaish kab hai?", a: "9 November", b: "14 August", c: "23 March", d: "25 December", ans: "a" },
-          { id: 11, q: "Pakistan mein sabse zyada boli jane wali zaban kaunsi hai?", a: "Urdu", b: "Sindhi", c: "Punjabi", d: "Balochi", ans: "c" },
-          { id: 12, q: "Pakistan ka pehla wazir-e-azam kaun tha?", a: "Ayub Khan", b: "Liaquat Ali Khan", c: "Zulfikar Ali Bhutto", d: "Iskander Mirza", ans: "b" },
-          { id: 13, q: "Badshahi Mosque kahan hai?", a: "Karachi", b: "Islamabad", c: "Lahore", d: "Multan", ans: "c" },
-          { id: 14, q: "Pakistan Resolution kab manzoori hui?", a: "1940", b: "1947", c: "1945", d: "1930", ans: "a" },
-          { id: 15, q: "Pakistan ka qoumi janwar kaunsa hai?", a: "Snow Leopard", b: "Markhor", c: "Lion", d: "Tiger", ans: "b" },
-          { id: 16, q: "Pakistan ne pahli atomic test kab ki?", a: "1998", b: "1990", c: "2000", d: "1985", ans: "a" },
-          { id: 17, q: "CPEC ka poora naam kya hai?", a: "China Pakistan Economic Corridor", b: "Central Pakistan Economic Corridor", c: "China Pakistan Export Cooperation", d: "Central Pakistan Export Corridor", ans: "a" },
-          { id: 18, q: "Faisal Mosque kahan hai?", a: "Lahore", b: "Karachi", c: "Islamabad", d: "Rawalpindi", ans: "c" },
-          { id: 19, q: "Pakistan ka sabse bara desert kaunsa hai?", a: "Thal Desert", b: "Thar Desert", c: "Cholistan", d: "Kharan", ans: "b" },
-          { id: 20, q: "Gwadar kis sube mein hai?", a: "Sindh", b: "Punjab", c: "KPK", d: "Balochistan", ans: "d" },
-          { id: 21, q: "Pakistan ka currency kya hai?", a: "Taka", b: "Rupee", c: "Dinar", d: "Dirham", ans: "b" },
-          { id: 22, q: "Simla Agreement kab hua?", a: "1971", b: "1972", c: "1973", d: "1965", ans: "b" },
-          { id: 23, q: "Pakistan mein kitni official languages hain?", a: "1", b: "2", c: "3", d: "4", ans: "b" },
-          { id: 24, q: "Lahore ka purana naam kya tha?", a: "Lahanour", b: "Loh-awar", c: "Lavapuri", d: "Lahwar", ans: "b" },
-          { id: 25, q: "Pakistan ka qoumi darya kaunsa hai?", a: "Ravi", b: "Jhelum", c: "Chenab", d: "Indus (Sindh)", ans: "d" },
-          { id: 26, q: "Quaid-e-Azam ki date of birth kya hai?", a: "25 December 1876", b: "14 August 1947", c: "23 March 1940", d: "11 September 1948", ans: "a" },
-          { id: 27, q: "Pakistan ka area kitna hai (approximately)?", a: "581,000 sq km", b: "796,095 sq km", c: "450,000 sq km", d: "900,000 sq km", ans: "b" },
-          { id: 28, q: "Pakistan ka qoumi panda (bird) kaunsa hai?", a: "Parrot", b: "Eagle", c: "Chukar Partridge", d: "Peacock", ans: "c" },
-          { id: 29, q: "Pakistan mein sabse pehle Olympic gold medal kisne jita?", a: "Jahangir Khan", b: "Pakistan Hockey Team", c: "Imran Khan", d: "Arshad Nadeem", ans: "b" },
-          { id: 30, q: "Pakistan ka sabse bara shehar surface area mein kaunsa hai?", a: "Karachi", b: "Lahore", c: "Quetta", d: "Hyderabad", ans: "a" },
+            { id: 1, q: "Pakistan ka qoumi khel kaunsa hai?", a: "Cricket", b: "Hockey", c: "Football", d: "Kabaddi", ans: "b" },
+            { id: 2, q: "Pakistan ka darul hukumat?", a: "Lahore", b: "Karachi", c: "Islamabad", d: "Peshawar", ans: "c" },
+            { id: 3, q: "Photosynthesis mein kaun si gas release hoti hai?", a: "CO2", b: "N2", c: "O2", d: "H2", ans: "c" },
+            { id: 4, q: "Human body mein kitni bones hoti hain?", a: "196", b: "206", c: "216", d: "186", ans: "b" },
         ];
 
-        // Updated keys to avoid conflicts
-        const SK_R = "qr_v7", SK_Q = "qq_v7", SK_L = "ql_v7";
-        
         const loadS = (key, fb) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb; } catch { return fb; } };
         const saveS = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
 
-        const SCREEN = { HOME:"home", QUIZ:"quiz", DONE:"done", ADMIN:"admin", LOGIN:"login" };
+        // ── Shared Styles ──
+        const css = `
+            .fade-up { animation: fadeUp 0.5s ease both; }
+            .bg-grid {
+                background-color: #040408;
+                background-image: linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+                                  linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+                background-size: 40px 40px;
+            }
+            .glass {
+                background: rgba(255,255,255,0.03);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 24px;
+                backdrop-filter: blur(20px);
+            }
+            .glass-strong {
+                background: rgba(99,102,241,0.06);
+                border: 1px solid rgba(99,102,241,0.2);
+                border-radius: 24px;
+                backdrop-filter: blur(30px);
+                animation: glow 3s ease-in-out infinite;
+            }
+            .btn-primary {
+                width: 100%; padding: 14px 24px;
+                border-radius: 14px; border: none;
+                background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+                color: white; font-weight: 700; font-size: 15px;
+                font-family: 'Sora', sans-serif;
+                cursor: pointer; transition: all 0.2s ease;
+                position: relative; overflow: hidden;
+            }
+            .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.4); }
+            .btn-primary:active { transform: translateY(0); }
+            .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+            .btn-secondary {
+                padding: 10px 20px; border-radius: 12px;
+                border: 1px solid rgba(255,255,255,0.12);
+                background: rgba(255,255,255,0.05);
+                color: rgba(255,255,255,0.7); font-family: 'Sora', sans-serif;
+                font-size: 13px; cursor: pointer; transition: all 0.2s;
+            }
+            .btn-secondary:hover { background: rgba(255,255,255,0.1); color: white; }
+            .btn-danger {
+                padding: 10px 20px; border-radius: 12px;
+                border: 1px solid rgba(239,68,68,0.3);
+                background: rgba(239,68,68,0.1);
+                color: #f87171; font-family: 'Sora', sans-serif;
+                font-size: 13px; cursor: pointer; transition: all 0.2s;
+            }
+            .btn-danger:hover { background: rgba(239,68,68,0.2); }
+            .input-field {
+                width: 100%; padding: 14px 18px;
+                border-radius: 14px;
+                border: 1px solid rgba(255,255,255,0.1);
+                background: rgba(255,255,255,0.04);
+                color: white; font-family: 'Sora', sans-serif; font-size: 14px;
+                outline: none; transition: all 0.2s;
+            }
+            .input-field:focus { border-color: rgba(99,102,241,0.5); background: rgba(99,102,241,0.06); }
+            .input-field::placeholder { color: rgba(255,255,255,0.3); }
+            .opt-btn {
+                width: 100%; padding: 14px 18px; margin: 6px 0;
+                border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);
+                background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.85);
+                text-align: left; cursor: pointer;
+                font-family: 'Sora', sans-serif; font-size: 14px;
+                transition: all 0.2s ease; display: flex; align-items: center; gap: 12px;
+            }
+            .opt-btn:hover { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.3); color: white; }
+            .opt-btn.selected {
+                background: rgba(99,102,241,0.15);
+                border-color: #6366f1;
+                color: white;
+                box-shadow: 0 0 20px rgba(99,102,241,0.2);
+            }
+            .opt-label {
+                width: 28px; height: 28px; border-radius: 8px;
+                background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
+                display: flex; align-items: center; justify-content: center;
+                font-size: 11px; font-weight: 700; color: #818cf8;
+                flex-shrink: 0; font-family: 'JetBrains Mono', monospace;
+            }
+            .opt-btn.selected .opt-label { background: #6366f1; color: white; border-color: #6366f1; }
+            .tab-btn {
+                flex: 1; padding: 12px; border-radius: 12px; border: none;
+                font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600;
+                cursor: pointer; transition: all 0.2s;
+            }
+            .tab-btn.active {
+                background: linear-gradient(135deg, #6366f1, #a855f7);
+                color: white;
+            }
+            .tab-btn.inactive {
+                background: rgba(255,255,255,0.04);
+                color: rgba(255,255,255,0.5);
+                border: 1px solid rgba(255,255,255,0.08);
+            }
+            .tab-btn.inactive:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); }
+            .stat-card {
+                background: rgba(255,255,255,0.03);
+                border: 1px solid rgba(255,255,255,0.07);
+                border-radius: 16px; padding: 20px;
+                text-align: center;
+            }
+            .ai-loading {
+                display: flex; align-items: center; gap: 10px;
+                color: #818cf8; font-size: 13px;
+                animation: pulse 1.5s ease infinite;
+            }
+            .spinner {
+                width: 18px; height: 18px; border: 2px solid rgba(99,102,241,0.3);
+                border-top-color: #6366f1; border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+            }
+            .score-ring {
+                width: 120px; height: 120px; border-radius: 50%;
+                background: conic-gradient(#6366f1 var(--pct), rgba(255,255,255,0.05) 0);
+                display: flex; align-items: center; justify-content: center;
+                margin: 0 auto 20px;
+                box-shadow: 0 0 40px rgba(99,102,241,0.3);
+                position: relative;
+            }
+            .score-inner {
+                width: 90px; height: 90px; border-radius: 50%;
+                background: #040408; display: flex; flex-direction: column;
+                align-items: center; justify-content: center;
+            }
+            .badge {
+                display: inline-flex; align-items: center; gap: 6px;
+                padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 600;
+            }
+            .badge-green { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
+            .badge-yellow { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+            .badge-red { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+            .result-row {
+                display: grid; grid-template-columns: 1fr auto auto auto;
+                gap: 12px; align-items: center;
+                padding: 16px 20px; border-radius: 14px;
+                background: rgba(255,255,255,0.02);
+                border: 1px solid rgba(255,255,255,0.05);
+                margin-bottom: 8px; transition: all 0.2s;
+            }
+            .result-row:hover { background: rgba(255,255,255,0.04); border-color: rgba(99,102,241,0.2); }
+            .progress-bar {
+                height: 6px; border-radius: 3px;
+                background: rgba(255,255,255,0.06);
+                overflow: hidden; margin-top: 6px;
+            }
+            .progress-fill {
+                height: 100%; border-radius: 3px;
+                background: linear-gradient(90deg, #6366f1, #a855f7);
+                transition: width 0.8s ease;
+            }
+        `;
 
         function App() {
-          const [screen, setScreen] = useState(SCREEN.HOME);
-          const [name, setName] = useState("");
-          const [questions, setQuestions] = useState([]);
-          const [displayLimit, setDisplayLimit] = useState(10);
-          const [results, setResults] = useState([]);
-          const [current, setCurrent] = useState(0);
-          const [answers, setAnswers] = useState({});
-          const [selected, setSelected] = useState(null);
-          const [adminPass, setAdminPass] = useState("");
-          const [adminError, setAdminError] = useState(false);
-          const [adminView, setAdminView] = useState("results");
-          const [clicks, setClicks] = useState(0);
-          const [editQ, setEditQ] = useState(null);
+            const [screen, setScreen] = useState("home");
+            const [name, setName] = useState("");
+            const [questions, setQuestions] = useState([]);
+            const [displayLimit, setDisplayLimit] = useState(10);
+            const [results, setResults] = useState([]);
+            const [current, setCurrent] = useState(0);
+            const [answers, setAnswers] = useState({});
+            const [selected, setSelected] = useState(null);
+            const [adminPass, setAdminPass] = useState("");
+            const [adminView, setAdminView] = useState("results");
+            const [clicks, setClicks] = useState(0);
+            const [aiPrompt, setAiPrompt] = useState("");
+            const [aiLoading, setAiLoading] = useState(false);
+            const [aiStatus, setAiStatus] = useState("");
+            const [lastScore, setLastScore] = useState(null);
+            const [wrongPass, setWrongPass] = useState(false);
 
-          useEffect(() => {
-            setQuestions(loadS(SK_Q, DEFAULT_QUESTIONS));
-            setResults(loadS(SK_R, []));
-            setDisplayLimit(loadS(SK_L, 10));
-          }, []);
+            // Always load fresh results from localStorage
+            useEffect(() => {
+                setQuestions(loadS(SK_Q, DEFAULT_QUESTIONS));
+                setResults(loadS(SK_R, []));
+                setDisplayLimit(loadS(SK_L, 10));
+            }, []);
 
-          const secretClick = () => { const n = clicks+1; setClicks(n); if(n>=5){setClicks(0);setScreen(SCREEN.LOGIN);} };
-          const startQuiz = () => { if(!name.trim()) return; setCurrent(0); setAnswers({}); setScreen(SCREEN.QUIZ); };
-          
-          const next = () => {
-            const na = {...answers,[current]:selected}; setAnswers(na); setSelected(null);
-            if(current+1 < displayLimit && current+1 < questions.length){ setCurrent(c=>c+1); }
-            else {
-              let score=0;
-              const activeQs = questions.slice(0, displayLimit);
-              activeQs.forEach((q,i)=>{ if(na[i]===q.ans) score++; });
-              const nr=[...results,{name:name.trim(),score,total:displayLimit,time:new Date().toLocaleString()}];
-              setResults(nr); saveS(SK_R,nr); setScreen(SCREEN.DONE);
-            }
-          };
+            // Re-load results every time admin screen opens
+            useEffect(() => {
+                if (screen === "admin") {
+                    setResults(loadS(SK_R, []));
+                }
+            }, [screen]);
 
-          const saveQuestion = (qObj) => { const u = questions.map(q => q.id === qObj.id ? qObj : q); setQuestions(u); saveS(SK_Q, u); setEditQ(null); };
+            const secretClick = () => {
+                setClicks(c => {
+                    if (c + 1 >= 5) { setScreen("login"); return 0; }
+                    return c + 1;
+                });
+            };
 
-          const G = `
-            *{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif;}
-            .card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:40px; color:#fff; width:100%; max-width:460px; text-align:center; }
-            .btn { width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(135deg, #6366f1, #8b5cf6); color:white; font-size:16px; font-weight:600; cursor:pointer; margin-top:10px; }
-            .input { width:100%; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; margin-bottom:20px; outline:none;}
-            .opt-btn { width:100%; padding:14px; margin-bottom:10px; border-radius:12px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#cbd5e1; }
-          `;
+            const finishQuiz = (finalAnswers) => {
+                let score = 0;
+                const activeQs = questions.slice(0, displayLimit);
+                activeQs.forEach((q, i) => { if (finalAnswers[i] === q.ans) score++; });
+                const pct = Math.round((score / Math.min(displayLimit, questions.length)) * 100);
+                const total = Math.min(displayLimit, questions.length);
+                const entry = {
+                    name: name.trim(), score, total, percentage: pct,
+                    time: new Date().toLocaleString('ur-PK')
+                };
+                // Load latest results fresh and append
+                const latest = loadS(SK_R, []);
+                const updated = [...latest, entry];
+                setResults(updated);
+                saveS(SK_R, updated);
+                setLastScore({ score, total, pct });
+                setScreen("done");
+            };
 
-          if(screen===SCREEN.HOME) return (
-            <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
-              <style>{G}</style>
-              <div className="card">
-                <h1 style={{fontSize:"40px", marginBottom:"10px"}}>Welcome!</h1>
-                <p style={{color:"#9ca3af", marginBottom:"30px"}}>Apna naam likhein aur quiz shuru karein</p>
-                <input className="input" placeholder="Your Name..." value={name} onChange={e=>setName(e.target.value)} />
-                <button className="btn" onClick={startQuiz}>Quiz Shuru Karein →</button>
-                <div style={{marginTop:"30px", color:"#080810", cursor:"pointer", userSelect:"none"}} onClick={secretClick}>● ● ●</div>
-              </div>
-            </div>
-          );
+            const next = () => {
+                const na = { ...answers, [current]: selected };
+                setAnswers(na);
+                setSelected(null);
+                const limit = Math.min(displayLimit, questions.length);
+                if (current + 1 < limit) { setCurrent(c => c + 1); }
+                else { finishQuiz(na); }
+            };
 
-          if(screen===SCREEN.LOGIN) return (
-            <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center"}}>
-              <style>{G}</style>
-              <div className="card" style={{maxWidth:"360px"}}>
-                <h2 style={{marginBottom:"20px"}}>Admin Access</h2>
-                <input className="input" type="password" placeholder="Password..." value={adminPass} onChange={e=>setAdminPass(e.target.value)} />
-                <button className="btn" onClick={()=>{if(adminPass===ADMIN_PASSWORD) setScreen(SCREEN.ADMIN); else setAdminError(true);}}>Login</button>
-                {adminError && <p style={{color:"#f87171", marginTop:"10px"}}>Wrong Password</p>}
-              </div>
-            </div>
-          );
+            const startQuiz = () => {
+                setCurrent(0); setAnswers({}); setSelected(null);
+                setScreen("quiz");
+            };
 
-          if(screen===SCREEN.QUIZ) return (
-            <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
-              <style>{G}</style>
-              <div className="card" style={{maxWidth:"600px", textAlign:"left"}}>
-                <h2 style={{marginBottom:"25px"}}>{questions[current]?.q}</h2>
-                {["a","b","c","d"].map(opt => (
-                  <button key={opt} className="opt-btn" onClick={()=>setSelected(opt)} style={{border:selected===opt?"1px solid #6366f1":""}}>
-                    <span style={{background:selected===opt?"#6366f1":"rgba(255,255,255,0.1)", padding:"5px 10px", borderRadius:"8px"}}>{opt.toUpperCase()}</span>
-                    {questions[current][opt]}
-                  </button>
-                ))}
-                <button className="btn" onClick={next} disabled={!selected} style={{opacity:selected?1:0.5}}>Next →</button>
-              </div>
-            </div>
-          );
+            const clearResults = () => {
+                if (window.confirm("Sare results delete karna chahte hain?")) {
+                    saveS(SK_R, []);
+                    setResults([]);
+                }
+            };
 
-          if(screen===SCREEN.DONE) return (
-            <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center"}}>
-              <style>{G}</style>
-              <div className="card">
-                <h1 style={{color:"#4ade80"}}>Shukriya!</h1>
-                <p style={{marginTop:"15px", color:"#e2e8f0"}}>{name}, aapne quiz mukammal kar liya.</p>
-                <p style={{color:"#9ca3af", marginBottom:"25px"}}>Results group mein send kar diye jayenge.</p>
-                <button className="btn" onClick={()=>{setScreen(SCREEN.HOME);setName("");}}>دوسرا شخص →</button>
-              </div>
-            </div>
-          );
+            // ── AI Quiz Generator ──
+            const generateWithAI = async () => {
+                if (!aiPrompt.trim()) return;
+                setAiLoading(true);
+                setAiStatus("AI se sawal ban rahe hain...");
+                try {
+                    const count = displayLimit || 10;
+                    const systemPrompt = `You are an expert MDCAT/medical quiz maker. Generate exactly ${count} multiple-choice questions.
+STRICT FORMAT (one question per line, pipe-separated, NO extra text, NO numbering, NO markdown):
+Question text|Option A|Option B|Option C|Option D|correct_letter
+correct_letter must be lowercase: a, b, c, or d
+Example: What is the powerhouse of the cell?|Nucleus|Mitochondria|Ribosome|Golgi Body|b`;
 
-          if(screen===SCREEN.ADMIN) return (
-            <div style={{minHeight:"100vh", background:"#080810", color:"white", padding:"20px"}}>
-              <div style={{maxWidth:"800px", margin:"0 auto", background:"rgba(255,255,255,0.05)", padding:"20px", borderRadius:"20px"}}>
-                <div style={{display:"flex", justifyContent:"space-between", marginBottom:"20px"}}>
-                  <h2>🛡️ Admin Panel</h2>
-                  <div style={{display:"flex", gap:"10px"}}>
-                    <button onClick={()=>setAdminView("results")} className="btn" style={{padding:"8px 15px", margin:0, background: adminView==="results"?"#6366f1":"#4b5563"}}>Results</button>
-                    <button onClick={()=>setAdminView("questions")} className="btn" style={{padding:"8px 15px", margin:0, background: adminView==="questions"?"#6366f1":"#4b5563"}}>Questions</button>
-                    <button onClick={()=>setScreen(SCREEN.HOME)} className="btn" style={{padding:"8px 15px", margin:0, background:"#ef4444"}}>Logout</button>
-                  </div>
-                </div>
+                    const response = await fetch("https://api.anthropic.com/v1/messages", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            model: "claude-sonnet-4-20250514",
+                            max_tokens: 4000,
+                            system: systemPrompt,
+                            messages: [{ role: "user", content: `Generate ${count} MCQs about: ${aiPrompt}` }]
+                        })
+                    });
 
-                {adminView === "results" ? (
-                  <div>
-                    <div style={{marginBottom:"20px"}}>
-                      <label>Kitne Sawal Dikhane Hain? </label>
-                      <select value={displayLimit} onChange={(e)=>{setDisplayLimit(e.target.value); saveS(SK_L, e.target.value);}} style={{padding:"8px", borderRadius:"8px", background:"#111", color:"white"}}>
-                          <option value="5">5 Questions</option><option value="10">10 Questions</option><option value="20">20 Questions</option><option value="30">30 Questions</option>
-                      </select>
+                    const data = await response.json();
+                    const text = data.content?.map(b => b.text || "").join("\n") || "";
+                    const lines = text.split('\n').filter(l => l.includes('|') && l.split('|').length === 6);
+
+                    if (lines.length === 0) throw new Error("No valid questions found");
+
+                    const newQs = lines.map((line, i) => {
+                        const parts = line.split('|');
+                        return {
+                            id: Date.now() + i,
+                            q: parts[0]?.trim(),
+                            a: parts[1]?.trim(),
+                            b: parts[2]?.trim(),
+                            c: parts[3]?.trim(),
+                            d: parts[4]?.trim(),
+                            ans: parts[5]?.trim().toLowerCase()
+                        };
+                    }).filter(q => q.q && q.a && q.b && q.c && q.d && ['a','b','c','d'].includes(q.ans));
+
+                    if (newQs.length === 0) throw new Error("Parsing failed");
+
+                    setQuestions(newQs);
+                    saveS(SK_Q, newQs);
+                    const newLimit = Math.min(displayLimit, newQs.length);
+                    setDisplayLimit(newLimit);
+                    saveS(SK_L, newLimit);
+                    setAiStatus(`✅ ${newQs.length} sawal successfully ban gaye!`);
+                    setAiPrompt("");
+                } catch (err) {
+                    setAiStatus("❌ Error: " + err.message + " — Dobara try karein");
+                } finally {
+                    setAiLoading(false);
+                }
+            };
+
+            // ── Screens ──
+
+            if (screen === "home") return (
+                <div className="bg-grid" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+                    <style>{css}</style>
+                    <div className="glass-strong fade-up" style={{ width: "100%", maxWidth: 420, padding: 40, textAlign: "center" }}>
+                        {/* Logo */}
+                        <div style={{ width: 64, height: 64, borderRadius: 20, background: "linear-gradient(135deg,#6366f1,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: 28 }}>📝</div>
+                        <h1 style={{ color: "white", fontSize: 28, fontWeight: 800, letterSpacing: "-0.5px", marginBottom: 8 }}>Smart Quiz</h1>
+                        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginBottom: 32 }}>Apna naam likhein aur quiz shuru karein</p>
+                        <input
+                            className="input-field"
+                            placeholder="Aapka naam..."
+                            style={{ marginBottom: 16 }}
+                            onChange={e => setName(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && name.trim() && startQuiz()}
+                        />
+                        <button className="btn-primary" onClick={startQuiz} disabled={!name.trim()}>
+                            Quiz Shuru Karein →
+                        </button>
+                        <div onClick={secretClick} style={{ marginTop: 48, color: "#040408", userSelect: "none", cursor: "default", fontSize: 10 }}>● ● ●</div>
                     </div>
-                    <table style={{width:"100%", borderCollapse:"collapse"}}>
-                      <thead><tr style={{background:"rgba(255,255,255,0.1)"}}><th style={{padding:"10px", textAlign:"left"}}>Name</th><th style={{padding:"10px", textAlign:"left"}}>Score</th><th style={{padding:"10px", textAlign:"left"}}>Time</th></tr></thead>
-                      <tbody>{results.map((r,i)=>(<tr key={i} style={{borderBottom:"1px solid #222"}}><td style={{padding:"10px"}}>{r.name}</td><td style={{padding:"10px"}}>{r.score}/{r.total}</td><td style={{padding:"10px", color:"#9ca3af"}}>{r.time}</td></tr>))}</tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div>
-                    {editQ ? (
-                        <div style={{background:"#111", padding:"20px", borderRadius:"12px"}}>
-                            <h3>Edit Question</h3>
-                            <input className="input" value={editQ.q} onChange={e=>setEditQ({...editQ, q:e.target.value})} />
-                            {["a","b","c","d"].map(o=>(<input key={o} className="input" value={editQ[o]} onChange={e=>setEditQ({...editQ, [o]:e.target.value})} />))}
-                            <button className="btn" onClick={()=>saveQuestion(editQ)}>Save Changes</button>
-                            <button className="btn" style={{background:"#ef4444"}} onClick={()=>setEditQ(null)}>Cancel</button>
-                        </div>
-                    ) : (
-                        questions.map(q=>(
-                            <div key={q.id} style={{display:"flex", justifyContent:"space-between", padding:"15px", borderBottom:"1px solid #333"}}>
-                                <span>{q.q}</span>
-                                <button onClick={()=>setEditQ(q)} style={{background:"#6366f1", border:"none", color:"white", padding:"5px 12px", borderRadius:"8px", cursor:"pointer"}}>Edit</button>
-                            </div>
-                        ))
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        }
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-    </script>
-</body>
-</html>
+                </div>
+            );
+
+            if (screen === "login") return (
+                <div className="bg-grid" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+                    <style>{css}</style>
+                    <div className="glass fade-up" style={{ width: "100%", maxWidth: 380, padding: 40 }}>
+                        <div style={{ fontSize: 36, marginBottom: 16 }}>🛡️</div>
+                        <h2 style={{ color: "white", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Admin Login</h2>
+                        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginBottom: 28 }}>Admin panel access ke liye password enter karein</p>
+                        <input className="input-field" type="password" placeholder="Password..." style={{ marginBottom: wrongPass ? 8 : 16 }}
+                            onChange={e => { setAdminPass(e.target.value); setWrongPass(false); }}
+                            onKeyDown={e => { if(e.key==="Enter") { if(adminPass===ADMIN_PASSWORD) setScreen("admin"); else setWrongPass(true); }}}
+                        />
+                        {wrongPass && <p style={{ color: "#f87171", fontSize: 12, marginBottom: 16 }}>❌ Galat password!</p>}
+                        <button className="btn-primary" onClick={() => { if(adminPass===ADMIN_PASSWORD) setScreen("admin"); else setWrongPass(true); }}>
+                            Login
+                        </button>
+                        <button className="btn-secondary" style={{ widt
