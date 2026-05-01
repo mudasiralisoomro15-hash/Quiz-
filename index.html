@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Quiz Portal</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body style="margin: 0; background: #080810;">
+<body style="margin: 0; padding: 0; background-color: #080810;">
     <div id="root"></div>
 
     <script type="text/babel">
-        // React Hooks ko load karna
         const { useState, useEffect } = React;
 
         const ADMIN_PASSWORD = "admin786";
@@ -27,81 +26,299 @@
           { id: 7, q: "Pakistan ka sabse uncha pahad kaunsa hai?", a: "Nanga Parbat", b: "Broad Peak", c: "K2", d: "Tirich Mir", ans: "c" },
           { id: 8, q: "Pakistan ka qoumi phool kaunsa hai?", a: "Gulab", b: "Chameli", c: "Yasmin", d: "Sunflower", ans: "c" },
           { id: 9, q: "Pakistan Independence Day kab manaya jata hai?", a: "23 March", b: "14 August", c: "6 September", d: "25 December", ans: "b" },
-          { id: 10, q: "Allama Iqbal ka yom paidaish kab hai?", a: "9 November", b: "14 August", c: "23 March", d: "25 December", ans: "a" }
+          { id: 10, q: "Allama Iqbal ka yom paidaish kab hai?", a: "9 November", b: "14 August", c: "23 March", d: "25 December", ans: "a" },
+          { id: 11, q: "Pakistan mein sabse zyada boli jane wali zaban kaunsi hai?", a: "Urdu", b: "Sindhi", c: "Punjabi", d: "Balochi", ans: "c" },
+          { id: 12, q: "Pakistan ka pehla wazir-e-azam kaun tha?", a: "Ayub Khan", b: "Liaquat Ali Khan", c: "Zulfikar Ali Bhutto", d: "Iskander Mirza", ans: "b" },
+          { id: 13, q: "Badshahi Mosque kahan hai?", a: "Karachi", b: "Islamabad", c: "Lahore", d: "Multan", ans: "c" },
+          { id: 14, q: "Pakistan Resolution kab manzoori hui?", a: "1940", b: "1947", c: "1945", d: "1930", ans: "a" },
+          { id: 15, q: "Pakistan ka qoumi janwar kaunsa hai?", a: "Snow Leopard", b: "Markhor", c: "Lion", d: "Tiger", ans: "b" },
+          { id: 16, q: "Pakistan ne pahli atomic test kab ki?", a: "1998", b: "1990", c: "2000", d: "1985", ans: "a" },
+          { id: 17, q: "CPEC ka poora naam kya hai?", a: "China Pakistan Economic Corridor", b: "Central Pakistan Economic Corridor", c: "China Pakistan Export Cooperation", d: "Central Pakistan Export Corridor", ans: "a" },
+          { id: 18, q: "Faisal Mosque kahan hai?", a: "Lahore", b: "Karachi", c: "Islamabad", d: "Rawalpindi", ans: "c" },
+          { id: 19, q: "Pakistan ka sabse bara desert kaunsa hai?", a: "Thal Desert", b: "Thar Desert", c: "Cholistan", d: "Kharan", ans: "b" },
+          { id: 20, q: "Gwadar kis sube mein hai?", a: "Sindh", b: "Punjab", c: "KPK", d: "Balochistan", ans: "d" },
+          { id: 21, q: "Pakistan ka currency kya hai?", a: "Taka", b: "Rupee", c: "Dinar", d: "Dirham", ans: "b" },
+          { id: 22, q: "Simla Agreement kab hua?", a: "1971", b: "1972", c: "1973", d: "1965", ans: "b" },
+          { id: 23, q: "Pakistan mein kitni official languages hain?", a: "1", b: "2", c: "3", d: "4", ans: "b" },
+          { id: 24, q: "Lahore ka purana naam kya tha?", a: "Lahanour", b: "Loh-awar", c: "Lavapuri", d: "Lahwar", ans: "b" },
+          { id: 25, q: "Pakistan ka qoumi darya kaunsa hai?", a: "Ravi", b: "Jhelum", c: "Chenab", d: "Indus (Sindh)", ans: "d" },
+          { id: 26, q: "Quaid-e-Azam ki date of birth kya hai?", a: "25 December 1876", b: "14 August 1947", c: "23 March 1940", d: "11 September 1948", ans: "a" },
+          { id: 27, q: "Pakistan ka area kitna hai (approximately)?", a: "581,000 sq km", b: "796,095 sq km", c: "450,000 sq km", d: "900,000 sq km", ans: "b" },
+          { id: 28, q: "Pakistan ka qoumi panda (bird) kaunsa hai?", a: "Parrot", b: "Eagle", c: "Chukar Partridge", d: "Peacock", ans: "c" },
+          { id: 29, q: "Pakistan mein sabse pehle Olympic gold medal kisne jita?", a: "Jahangir Khan", b: "Pakistan Hockey Team", c: "Imran Khan", d: "Arshad Nadeem", ans: "b" },
+          { id: 30, q: "Pakistan ka sabse bara shehar surface area mein kaunsa hai?", a: "Karachi", b: "Lahore", c: "Quetta", d: "Hyderabad", ans: "a" },
         ];
 
-        // Storage functions (Simple browser storage)
-        const loadS = (key, fb) => {
-            const r = localStorage.getItem(key);
-            return r ? JSON.parse(r) : fb;
-        };
-        const saveS = (key, v) => localStorage.setItem(key, JSON.stringify(v));
+        const SK_R = "qr_v3", SK_Q = "qq_v3";
+        const loadS = (key, fb) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb; } catch { return fb; } }
+        const saveS = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} }
+
+        const SCREEN = { HOME:"home", QUIZ:"quiz", DONE:"done", ADMIN:"admin", LOGIN:"login" };
 
         function App() {
-            const [screen, setScreen] = useState("home");
-            const [name, setName] = useState("");
-            const [questions, setQuestions] = useState(DEFAULT_QUESTIONS);
-            const [current, setCurrent] = useState(0);
-            const [selected, setSelected] = useState(null);
-            const [score, setScore] = useState(0);
+          const [screen, setScreen] = useState(SCREEN.HOME);
+          const [name, setName] = useState("");
+          const [questions, setQuestions] = useState([]);
+          const [results, setResults] = useState([]);
+          const [current, setCurrent] = useState(0);
+          const [answers, setAnswers] = useState({});
+          const [selected, setSelected] = useState(null);
+          const [adminPass, setAdminPass] = useState("");
+          const [adminError, setAdminError] = useState(false);
+          const [adminView, setAdminView] = useState("results");
+          const [editQ, setEditQ] = useState(null);
+          const [loading, setLoading] = useState(true);
+          const [clicks, setClicks] = useState(0);
 
-            // CSS Styles as JavaScript Object
-            const styles = {
-                bg: { minHeight: "100vh", background: "#080810", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", fontFamily: "sans-serif" },
-                card: { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "24px", padding: "40px", width: "100%", maxWidth: "440px", textAlign: "center", color: "#fff" },
-                input: { width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #333", background: "#111", color: "#fff", marginBottom: "20px", boxSizing: "border-box" },
-                btn: { width: "100%", padding: "14px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", fontWeight: "bold", cursor: "pointer" },
-                opt: (isSelected) => ({
-                    width: "100%", padding: "12px", margin: "8px 0", borderRadius: "10px", border: isSelected ? "2px solid #6366f1" : "1px solid #333",
-                    background: isSelected ? "rgba(99,102,241,0.2)" : "#111", color: "#fff", textAlign: "left", cursor: "pointer"
-                })
-            };
+          useEffect(() => {
+            const q = loadS(SK_Q, DEFAULT_QUESTIONS);
+            const r = loadS(SK_R, []);
+            setQuestions(q); setResults(r); setLoading(false);
+          }, []);
 
-            const startQuiz = () => { if(name) setScreen("quiz"); };
+          const secretClick = () => { const n = clicks+1; setClicks(n); if(n>=5){setClicks(0);setScreen(SCREEN.LOGIN);} };
+          const startQuiz = () => { if(!name.trim()) return; setCurrent(0); setAnswers({}); setSelected(null); setScreen(SCREEN.QUIZ); };
+          const next = () => {
+            if(!selected) return;
+            const na = {...answers,[current]:selected}; setAnswers(na); setSelected(null);
+            if(current+1 < questions.length){ setCurrent(c=>c+1); }
+            else {
+              let score=0; questions.forEach((q,i)=>{ if(na[i]===q.ans) score++; });
+              const entry={name:name.trim(),score,total:questions.length,time:new Date().toLocaleString()};
+              const nr=[...results,entry]; setResults(nr); saveS(SK_R,nr); setScreen(SCREEN.DONE);
+            }
+          };
+          const adminLogin = () => { if(adminPass===ADMIN_PASSWORD){setAdminError(false);setAdminPass("");setScreen(SCREEN.ADMIN);}else setAdminError(true); };
+          const clearResults = () => { if(!window.confirm("Delete all results?")) return; setResults([]); saveS(SK_R,[]); };
+          const saveQuestion = (qObj) => { const u=questions.map(q=>q.id===qObj.id?qObj:q); setQuestions(u); saveS(SK_Q,u); setEditQ(null); };
+          const resetQuestions = () => { if(!window.confirm("Reset to default?")) return; setQuestions(DEFAULT_QUESTIONS); saveS(SK_Q,DEFAULT_QUESTIONS); };
 
-            const next = () => {
-                if(selected === questions[current].ans) setScore(score + 1);
-                setSelected(null);
-                if(current + 1 < questions.length) setCurrent(current + 1);
-                else setScreen("done");
-            };
+          const G = `
+            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+            *{box-sizing:border-box;margin:0;padding:0;}
+            @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+            @keyframes spin{to{transform:rotate(360deg)}}
+            @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(99,102,241,0.2)}50%{box-shadow:0 0 40px rgba(99,102,241,0.5)}}
+            @keyframes slideIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+            .ob{transition:all 0.15s ease!important}
+            .ob:hover{background:rgba(99,102,241,0.07)!important;border-color:#3d3d6b!important;transform:translateX(3px)}
+            .mb{transition:all 0.2s ease!important}
+            .mb:hover{transform:translateY(-2px);filter:brightness(1.1)}
+            .mb:active{transform:translateY(0)}
+            input:focus,textarea:focus{outline:none!important;border-color:#6366f1!important;box-shadow:0 0 0 3px rgba(99,102,241,0.12)!important}
+            ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#080810}::-webkit-scrollbar-thumb{background:#1e1e38;border-radius:4px}
+          `;
+          const BG = { minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center", padding:20, position:"relative", overflow:"hidden", fontFamily:"DM Sans, sans-serif" };
+          const CARD = { background:"rgba(255,255,255,0.025)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:24, backdropFilter:"blur(24px)", boxShadow:"0 32px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)" };
+          const INP = { width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:12, padding:"13px 16px", color:"#f0efff", fontSize:15, fontFamily:"DM Sans, sans-serif", display:"block", transition:"all 0.2s" };
+          const BTN = { width:"100%", background:"linear-gradient(135deg,#6366f1,#8b5cf6)", color:"#fff", border:"none", borderRadius:12, padding:"14px", fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"DM Sans, sans-serif", letterSpacing:0.3 };
 
-            if (screen === "home") return (
-                <div style={styles.bg}>
-                    <div style={styles.card}>
-                        <h1 style={{fontSize: "32px"}}>Welcome!</h1>
-                        <p style={{color: "#888"}}>Enter your name to start</p>
-                        <input style={styles.input} placeholder="Aapka Naam..." onChange={(e)=>setName(e.target.value)} />
-                        <button style={styles.btn} onClick={startQuiz}>Start Quiz →</button>
-                    </div>
+          if(loading) return (
+            <div style={{...BG,flexDirection:"column",gap:14}}>
+              <style>{G}</style>
+              <div style={{width:34,height:34,border:"2px solid #1a1a30",borderTop:"2px solid #6366f1",borderRadius:"50%",animation:"spin 0.7s linear infinite"}}/>
+              <p style={{color:"#6366f1",fontSize:13}}>Loading...</p>
+            </div>
+          );
+
+          if(screen===SCREEN.HOME) return (
+            <div style={BG}>
+              <style>{G}</style>
+              <div style={{position:"absolute",top:-120,left:-80,width:420,height:420,background:"radial-gradient(circle,rgba(99,102,241,0.1) 0%,transparent 65%)",pointerEvents:"none"}}/>
+              <div style={{position:"absolute",bottom:-100,right:-60,width:360,height:360,background:"radial-gradient(circle,rgba(139,92,246,0.08) 0%,transparent 65%)",pointerEvents:"none"}}/>
+              <div style={{width:"100%",maxWidth:440,animation:"fadeUp 0.5s ease"}}>
+                <div style={{textAlign:"center",marginBottom:28}}>
+                  <span style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(99,102,241,0.1)",border:"1px solid rgba(99,102,241,0.2)",borderRadius:50,padding:"7px 18px"}}>
+                    <span style={{fontSize:16}}>⚡</span>
+                    <span style={{color:"#a5b4fc",fontSize:12,letterSpacing:3,textTransform:"uppercase",fontWeight:500}}>Quiz Portal</span>
+                  </span>
                 </div>
-            );
-
-            if (screen === "quiz") return (
-                <div style={styles.bg}>
-                    <div style={styles.card}>
-                        <h3>Question {current + 1}</h3>
-                        <p style={{fontSize: "18px"}}>{questions[current].q}</p>
-                        {['a','b','c','d'].map(opt => (
-                            <button key={opt} style={styles.opt(selected === opt)} onClick={()=>setSelected(opt)}>
-                                {opt.toUpperCase()}. {questions[current][opt]}
-                            </button>
-                        ))}
-                        <button style={{...styles.btn, marginTop: "20px"}} onClick={next} disabled={!selected}>Next →</button>
-                    </div>
+                <div style={{...CARD,padding:"44px 34px"}}>
+                  <h1 style={{fontFamily:"Playfair Display,serif",fontSize:40,fontWeight:700,color:"#f0efff",textAlign:"center",marginBottom:8,lineHeight:1.1}}>Welcome!</h1>
+                  <p style={{color:"#4b5563",fontSize:14,textAlign:"center",marginBottom:32,lineHeight:1.6}}>Enter your name to begin the quiz</p>
+                  <label style={{display:"block",color:"#374151",fontSize:11,letterSpacing:2.5,textTransform:"uppercase",marginBottom:8}}>Your Name</label>
+                  <input style={{...INP,marginBottom:18}} placeholder="Type your name here..." value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&startQuiz()}/>
+                  <button className="mb" style={BTN} onClick={startQuiz}>Start Quiz →</button>
+                  <div style={{textAlign:"center",marginTop:26,paddingTop:22,borderTop:"1px solid rgba(255,255,255,0.04)"}}>
+                    <span style={{color:"#111120",fontSize:11,letterSpacing:1,cursor:"default",userSelect:"none"}} onClick={secretClick}>● ● ●</span>
+                  </div>
                 </div>
-            );
+              </div>
+            </div>
+          );
 
-            if (screen === "done") return (
-                <div style={styles.bg}>
-                    <div style={styles.card}>
-                        <h1>Result</h1>
-                        <p>{name}, aapka score hai:</p>
-                        <h2 style={{color: "#6366f1"}}>{score} / {questions.length}</h2>
-                        <button style={styles.btn} onClick={()=>window.location.reload()}>Try Again</button>
-                    </div>
+          if(screen===SCREEN.LOGIN) return (
+            <div style={BG}>
+              <style>{G}</style>
+              <div style={{...CARD,width:"100%",maxWidth:360,padding:"40px 30px",animation:"fadeUp 0.4s ease"}}>
+                <div style={{textAlign:"center",marginBottom:26}}>
+                  <div style={{width:52,height:52,background:"rgba(99,102,241,0.12)",border:"1px solid rgba(99,102,241,0.25)",borderRadius:16,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:22,marginBottom:14,animation:"glow 2s ease infinite"}}>🔐</div>
+                  <h2 style={{fontFamily:"Playfair Display,serif",color:"#f0efff",fontSize:22,marginBottom:4}}>Admin Access</h2>
+                  <p style={{color:"#374151",fontSize:13}}>Restricted area</p>
                 </div>
+                <input style={{...INP,marginBottom:10}} type="password" placeholder="Password..." value={adminPass} onChange={e=>setAdminPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&adminLogin()}/>
+                {adminError && <p style={{color:"#f87171",fontSize:13,marginBottom:10}}>❌ Incorrect password</p>}
+                <button className="mb" style={{...BTN,marginBottom:12}} onClick={adminLogin}>Login</button>
+                <p style={{textAlign:"center",color:"#1f2937",fontSize:13,cursor:"pointer"}} onClick={()=>setScreen(SCREEN.HOME)}>← Back</p>
+              </div>
+            </div>
+          );
+
+          if(screen===SCREEN.QUIZ) {
+            const q=questions[current]; const prog=((current+1)/questions.length)*100;
+            return (
+              <div style={BG}>
+                <style>{G}</style>
+                <div style={{position:"absolute",top:-60,right:-40,width:280,height:280,background:"radial-gradient(circle,rgba(99,102,241,0.07) 0%,transparent 70%)",pointerEvents:"none"}}/>
+                <div style={{width:"100%",maxWidth:580,animation:"slideIn 0.3s ease"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{width:7,height:7,background:"#6366f1",borderRadius:"50%",boxShadow:"0 0 6px #6366f1"}}/>
+                      <span style={{color:"#6b7280",fontSize:13}}>{name}</span>
+                    </div>
+                    <span style={{color:"#374151",fontSize:13,background:"rgba(255,255,255,0.03)",padding:"4px 12px",borderRadius:20,border:"1px solid rgba(255,255,255,0.06)"}}>{current+1} / {questions.length}</span>
+                  </div>
+                  <div style={{background:"rgba(255,255,255,0.04)",borderRadius:6,height:3,marginBottom:24,overflow:"hidden"}}>
+                    <div style={{background:"linear-gradient(90deg,#6366f1,#8b5cf6)",height:"100%",width:`${prog}%`,transition:"width 0.4s ease",borderRadius:6}}/>
+                  </div>
+                  <div style={{...CARD,padding:"34px 28px"}}>
+                    <p style={{fontFamily:"Playfair Display,serif",fontSize:19,color:"#f0efff",lineHeight:1.7,marginBottom:26,fontWeight:500}}>
+                      <span style={{color:"#6366f1",fontWeight:700,marginRight:8}}>{current+1}.</span>{q.q}
+                    </p>
+                    <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:26}}>
+                      {["a","b","c","d"].map(opt=>(
+                        <button key={opt} className="ob" onClick={()=>setSelected(opt)} style={{
+                          display:"flex",alignItems:"center",gap:14,
+                          background:selected===opt?"rgba(99,102,241,0.13)":"rgba(255,255,255,0.02)",
+                          border:selected===opt?"1.5px solid #6366f1":"1px solid rgba(255,255,255,0.06)",
+                          borderRadius:14,padding:"13px 16px",color:selected===opt?"#c7d2fe":"#9ca3af",
+                          fontSize:15,cursor:"pointer",textAlign:"left",fontFamily:"DM Sans,sans-serif",width:"100%"
+                        }}>
+                          <span style={{width:30,height:30,borderRadius:8,display:"inline-flex",alignItems:"center",justifyContent:"center",background:selected===opt?"#6366f1":"rgba(255,255,255,0.05)",color:selected===opt?"#fff":"#4b5563",fontWeight:700,fontSize:13,flexShrink:0}}>{opt.toUpperCase()}</span>
+                          {q[opt]}
+                        </button>
+                      ))}
+                    </div>
+                    <button className="mb" onClick={next} style={{...BTN,background:selected?"linear-gradient(135deg,#6366f1,#8b5cf6)":"rgba(255,255,255,0.04)",color:selected?"#fff":"#374151",border:selected?"none":"1px solid rgba(255,255,255,0.06)",cursor:selected?"pointer":"not-allowed"}}>
+                      {current+1===questions.length?"Submit ✓":"Next Question →"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             );
+          }
+
+          if(screen===SCREEN.DONE) return (
+            <div style={BG}>
+              <style>{G}</style>
+              <div style={{...CARD,width:"100%",maxWidth:420,padding:"52px 34px",textAlign:"center",animation:"fadeUp 0.5s ease"}}>
+                <div style={{width:76,height:76,background:"rgba(99,102,241,0.12)",border:"1px solid rgba(99,102,241,0.25)",borderRadius:22,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:34,marginBottom:22,animation:"glow 2s ease infinite"}}>✅</div>
+                <h1 style={{fontFamily:"Playfair Display,serif",fontSize:34,color:"#f0efff",marginBottom:12}}>Thank You!</h1>
+                <p style={{color:"#4b5563",fontSize:15,lineHeight:1.75}}>
+                  <strong style={{color:"#a5b4fc"}}>{name}</strong>, your quiz is complete.<br/>Results will be shared tonight. 🌙
+                </p>
+                <button className="mb" onClick={()=>{setScreen(SCREEN.HOME);setName("");}} style={{...BTN,marginTop:30}}>Next Person →</button>
+              </div>
+            </div>
+          );
+
+          if(screen===SCREEN.ADMIN) return (
+            <div style={{minHeight:"100vh",background:"#080810",fontFamily:"DM Sans,sans-serif"}}>
+              <style>{G}</style>
+              <div style={{background:"rgba(255,255,255,0.02)",borderBottom:"1px solid rgba(255,255,255,0.05)",padding:"14px 22px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10,backdropFilter:"blur(10px)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:9}}>
+                  <div style={{width:7,height:7,background:"#6366f1",borderRadius:"50%",boxShadow:"0 0 8px #6366f1"}}/>
+                  <span style={{color:"#a5b4fc",fontWeight:600,fontSize:15}}>Admin Panel</span>
+                </div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  {[["results","📊 Results"],["questions","❓ Questions"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>{setAdminView(v);setEditQ(null);}} style={{padding:"7px 15px",background:adminView===v?"linear-gradient(135deg,#6366f1,#8b5cf6)":"rgba(255,255,255,0.04)",color:adminView===v?"#fff":"#6b7280",border:adminView===v?"none":"1px solid rgba(255,255,255,0.07)",borderRadius:8,cursor:"pointer",fontWeight:adminView===v?600:400,fontSize:13,fontFamily:"DM Sans,sans-serif"}}>{l}</button>
+                  ))}
+                  <button onClick={()=>setScreen(SCREEN.HOME)} style={{padding:"7px 14px",background:"rgba(239,68,68,0.08)",color:"#f87171",border:"1px solid rgba(239,68,68,0.15)",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"DM Sans,sans-serif"}}>Logout</button>
+                </div>
+              </div>
+              <div style={{padding:22,maxWidth:860,margin:"0 auto"}}>
+                {adminView==="results" && <>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:18}}>
+                    <div>
+                      <p style={{color:"#f0efff",fontWeight:600,fontSize:17,fontFamily:"Playfair Display,serif"}}>Results</p>
+                      <p style={{color:"#374151",fontSize:13,marginTop:3}}>Total: <span style={{color:"#a5b4fc",fontWeight:600}}>{results.length}</span> participants</p>
+                    </div>
+                    {results.length>0 && <button onClick={clearResults} style={{padding:"7px 15px",background:"rgba(239,68,68,0.08)",color:"#f87171",border:"1px solid rgba(239,68,68,0.15)",borderRadius:8,cursor:"pointer",fontSize:13}}>🗑️ Clear All</button>}
+                  </div>
+                  {results.length===0
+                    ? <div style={{textAlign:"center",color:"#1a1a2e",padding:"70px 0",fontSize:15}}>No results yet.</div>
+                    : <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:16,overflow:"auto"}}>
+                        <table style={{width:"100%",borderCollapse:"collapse",minWidth:500}}>
+                          <thead><tr style={{background:"rgba(99,102,241,0.07)"}}>
+                            {["#","Name","Score","Percentage","Time"].map(h=>(
+                              <th key={h} style={{padding:"11px 15px",color:"#6366f1",textAlign:"left",fontSize:11,letterSpacing:1.5,textTransform:"uppercase",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>{h}</th>
+                            ))}
+                          </tr></thead>
+                          <tbody>
+                            {results.map((r,i)=>{
+                              const pct=Math.round((r.score/r.total)*100);
+                              const col=pct>=70?"#34d399":pct>=40?"#fbbf24":"#f87171";
+                              return (
+                                <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
+                                  <td style={{padding:"11px 15px",color:"#1f2937",fontSize:14}}>{i+1}</td>
+                                  <td style={{padding:"11px 15px",color:"#a5b4fc",fontWeight:600}}>{r.name}</td>
+                                  <td style={{padding:"11px 15px",color:"#d1d5db"}}>{r.score} / {r.total}</td>
+                                  <td style={{padding:"11px 15px"}}><span style={{color:col,fontWeight:700,background:`${col}15`,padding:"3px 10px",borderRadius:6,fontSize:13}}>{pct}%</span></td>
+                                  <td style={{padding:"11px 15px",color:"#374151",fontSize:12}}>{r.time}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                  }
+                </>}
+                {adminView==="questions" && <>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:18}}>
+                    <div>
+                      <p style={{color:"#f0efff",fontWeight:600,fontSize:17,fontFamily:"Playfair Display,serif"}}>Questions</p>
+                      <p style={{color:"#374151",fontSize:13,marginTop:3}}>{questions.length} questions total</p>
+                    </div>
+                    <button onClick={resetQuestions} style={{padding:"7px 15px",background:"rgba(255,255,255,0.04)",color:"#4b5563",border:"1px solid rgba(255,255,255,0.07)",borderRadius:8,cursor:"pointer",fontSize:13}}>Reset Default</button>
+                  </div>
+                  {editQ
+                    ? <QEditor q={editQ} onSave={saveQuestion} onCancel={()=>setEditQ(null)}/>
+                    : questions.map((q,i)=>(
+                        <div key={q.id} style={{display:"flex",alignItems:"center",gap:12,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:12,padding:"11px 15px",marginBottom:8}}>
+                          <span style={{color:"#6366f1",fontWeight:700,minWidth:26,fontSize:13}}>{i+1}.</span>
+                          <span style={{flex:1,color:"#6b7280",fontSize:14,lineHeight:1.5}}>{q.q}</span>
+                          <button onClick={()=>setEditQ({...q})} style={{padding:"5px 13px",background:"rgba(99,102,241,0.08)",color:"#818cf8",border:"1px solid rgba(99,102,241,0.18)",borderRadius:8,cursor:"pointer",fontSize:12,whiteSpace:"nowrap"}}>✏️ Edit</button>
+                        </div>
+                      ))
+                  }
+                </>}
+              </div>
+            </div>
+          );
+        }
+
+        function QEditor({q,onSave,onCancel}){
+          const [form,setForm]=useState({...q});
+          const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+          return (
+            <div style={{background:"rgba(99,102,241,0.05)",border:"1px solid rgba(99,102,241,0.15)",borderRadius:16,padding:22,marginBottom:16}}>
+              <p style={{color:"#6366f1",fontSize:11,textTransform:"uppercase",letterSpacing:2,marginBottom:10}}>Edit Question</p>
+              <textarea style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:10,padding:"11px 13px",color:"#f0efff",fontSize:15,marginBottom:14,display:"block",resize:"vertical",height:76,fontFamily:"DM Sans,sans-serif"}} value={form.q} onChange={e=>set("q",e.target.value)}/>
+              {["a","b","c","d"].map(opt=>(
+                <div key={opt} style={{display:"flex",alignItems:"center",gap:10,marginBottom:9}}>
+                  <button onClick={()=>set("ans",opt)} style={{width:30,height:30,borderRadius:8,border:form.ans===opt?"none":"1px solid #1e1e38",cursor:"pointer",background:form.ans===opt?"linear-gradient(135deg,#6366f1,#8b5cf6)":"rgba(255,255,255,0.03)",color:form.ans===opt?"#fff":"#2a2a4a",fontWeight:700,fontSize:13,flexShrink:0}}>✓</button>
+                  <span style={{color:"#374151",width:18,fontSize:13}}>{opt.toUpperCase()}.</span>
+                  <input style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"9px 12px",color:"#d1d5db",fontSize:14,fontFamily:"DM Sans,sans-serif"}} value={form[opt]} onChange={e=>set(opt,e.target.value)}/>
+                </div>
+              ))}
+              <p style={{color:"#1f2937",fontSize:12,marginBottom:14}}>Correct: <strong style={{color:"#a5b4fc"}}>{form.ans.toUpperCase()}</strong></p>
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={()=>onSave(form)} style={{flex:1,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",color:"#fff",border:"none",borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"DM Sans,sans-serif"}}>Save ✓</button>
+                <button onClick={onCancel} style={{padding:"12px 18px",background:"rgba(255,255,255,0.04)",color:"#4b5563",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,cursor:"pointer",fontFamily:"DM Sans,sans-serif"}}>Cancel</button>
+              </div>
+            </div>
+          );
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
