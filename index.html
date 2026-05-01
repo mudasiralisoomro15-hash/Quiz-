@@ -52,6 +52,12 @@
             color: white; text-align: left; cursor: pointer; transition: 0.2s;
         }
         .opt-btn.selected { background: rgba(99,102,241,0.2); border-color: #6366f1; }
+        .btn-danger {
+            background: #ef4444; color: white; padding: 10px 20px;
+            border: none; border-radius: 12px; cursor: pointer; font-weight: 600;
+            transition: 0.2s; margin-bottom: 20px;
+        }
+        .btn-danger:hover { background: #dc2626; transform: scale(1.02); }
     </style>
 </head>
 <body class="bg-grid">
@@ -190,7 +196,12 @@
 
                         {adminView === "results" ? (
                             <div className="glass-strong" style={{padding:20}}>
-                        <table style={{width:"100%", borderCollapse:"collapse"}}>
+                                <button className="btn-danger" onClick={() => {
+                                    if(window.confirm("Kiya aap tamam results delete karna chahte hain?")) {
+                                        setResults([]); saveS(SK_R, []);
+                                    }
+                                }}>🗑️ Clear All Results</button>
+
                                 <table style={{width:"100%", borderCollapse:"collapse"}}>
                                     <thead>
                                         <tr style={{borderBottom:"2px solid #222", color:"#6366f1"}}>
@@ -203,32 +214,5 @@
                                     <tbody>
                                         {results.map((r,i) => (
                                             <tr key={i} style={{borderBottom:"1px solid #222"}}>
-                                                <td style={{padding:15}}>{r.name}</td>
-                                                <td style={{padding:15, textAlign:"center"}}>{r.score}/{r.total}</td>
-                                                <td style={{padding:15, textAlign:"center", color:"#4ade80"}}>{r.percentage}%</td>
-                                                <td style={{padding:15, textAlign:"right", color:"#555"}}>{r.time}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="glass-strong">
-                                <h3>AI Bulk Import</h3>
-                                <textarea className="input-field" style={{height:200, marginTop:15}} 
-                                    placeholder="Question|OptionA|OptionB|OptionC|OptionD|ans"
-                                    value={bulkText} onChange={e=>setBulkText(e.target.value)} />
-                                <button className="btn-primary" onClick={handleBulkImport}>Save All Questions</button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+                                                <td style={{
 
