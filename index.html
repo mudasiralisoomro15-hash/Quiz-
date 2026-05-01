@@ -109,6 +109,9 @@
             const [adminView, setAdminView] = useState("results");
             const [clicks, setClicks] = useState(0);
             const [bulkText, setBulkText] = useState("");
+            
+            // New state for toggling result details
+            const [expandedIndex, setExpandedIndex] = useState(null);
 
             // Syncing with Firebase
             useEffect(() => {
@@ -140,12 +143,33 @@
 
             const finishQuiz = (finalAns) => {
                 let score = 0;
+                let wrongAnswers = []; // Save mistakes here
                 const limit = Math.min(displayLimit, questions.length);
                 const activeQs = questions.slice(0, limit);
-                activeQs.forEach((q, i) => { if(finalAns[i] === q.ans) score++; });
+                
+                activeQs.forEach((q, i) => { 
+                    if(finalAns[i] === q.ans) {
+                        score++; 
+                    } else {
+                        // Agar galat jawab diya to detail save karo
+                        wrongAnswers.push({
+                            question: q.q,
+                            userSelected: finalAns[i] ? q[finalAns[i]] : "No Answer",
+                            correctIs: q[q.ans]
+                        });
+                    }
+                });
+                
                 const pct = Math.round((score / limit) * 100);
                 
-                const entry = { name: name.trim(), score, total: limit, percentage: pct, time: new Date().toLocaleString() };
+                const entry = { 
+                    name: name.trim(), 
+                    score, 
+                    total: limit, 
+                    percentage: pct, 
+                    time: new Date().toLocaleString(),
+                    wrongAnswers // Send mistakes to Firebase
+                };
                 
                 // Save to Firebase
                 window.fbPush(window.fbRef(window.fbDB, 'results'), entry);
@@ -247,16 +271,53 @@
                                             <th style={{padding:15}}>Score</th>
                                             <th style={{padding:15}}>Percentage</th>
                                             <th style={{padding:15, textAlign:"right"}}>Time</th>
+                                            <th style={{padding:15, textAlign:"center"}}>Details</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {results.map((r,i) => (
-                                            <tr key={i} style={{borderBottom:"1px solid #222"}}>
-                                                <td style={{padding:15}}>{r.name}</td>
-                                                <td style={{padding:15, textAlign:"center"}}>{r.score}/{r.total}</td>
-                                                <td style={{padding:15, textAlign:"center", color:"#4ade80"}}>{r.percentage}%</td>
-                                                <td style={{padding:15, textAlign:"right", color:"#555"}}>{r.time}</td>
-                                            </tr>
+                                            <React.Fragment key={i}>
+                                                <tr style={{borderBottom:"1px solid #222"}}>
+                                                    <td style={{padding:15}}>{r.name}</td>
+                                                    <td style={{padding:15, textAlign:"center"}}>{r.score}/{r.total}</td>
+                                                    <td style={{padding:15, textAlign:"center", color:"#4ade80"}}>{r.percentage}%</td>
+                                                    <td style={{padding:15, textAlign:"right", color:"#555", fontSize:12}}>{r.time}</td>
+                                                    <td style={{padding:15, textAlign:"center"}}>
+                                                        <button 
+                                                            style={{background:"#2a2a35", color:"white", padding:"6px 12px", borderRadius:"8px", border:"none", cursor:"pointer", fontSize:12}}
+                                                            onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}
+                                                        >
+                                                            {expandedIndex === i ? "Hide" : "View"}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                
+                                                {/* Expanded Row for Details */}
+                                                {expandedIndex === i && (
+                                                    <tr style={{background:"rgba(255,255,255,0.02)"}}>
+                                                        <td colSpan="5" style={{padding:"20px 30px"}}>
+                                                            {r.score === r.total ? (
+                                                                <p style={{color:"#4ade80", textAlign:"center", margin:0}}>Zabardast! Saare jawab sahi hain. 🎉</p>
+                                                            ) : r.wrongAnswers && r.wrongAnswers.length > 0 ? (
+                                                                <div>
+                                                                    <h4 style={{color:"#ef4444", marginBottom:15}}>Galat Jawabaat:</h4>
+                                                                    <ul style={{listStyle:"none", padding:0, margin:0}}>
+                                                                        {r.wrongAnswers.map((wa, idx) => (
+                                                                            <li key={idx} style={{marginBottom:15, borderBottom:"1px solid #222", paddingBottom:15}}>
+                                                                                <p style={{color:"#ccc", marginBottom:8, fontSize:15}}><b>Q:</b> {wa.question}</p>
+                                                                                <p style={{color:"#ef4444", margin:"0 0 5px 0", fontSize:14}}>❌ Unka Jawab: {wa.userSelected}</p>
+                                                                                <p style={{color:"#4ade80", margin:0, fontSize:14}}>✅ Sahi Jawab: {wa.correctIs}</p>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </div>
+                                                            ) : (
+                                                                <p style={{color:"#888", textAlign:"center", margin:0}}>Yeh purana test hai, iski details mojood nahi.</p>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </React.Fragment>
                                         ))}
                                     </tbody>
                                 </table>
