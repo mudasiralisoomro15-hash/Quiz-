@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Sora', sans-serif; background: #040408; min-height: 100vh; overflow-x: hidden; }
@@ -63,19 +64,37 @@
 <body class="bg-grid">
     <div id="root"></div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Aapka Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBUUVU_-RNoEXk-M-sw72pzg0IwzvtcgaM",
+            authDomain: "quiz-e9e15.firebaseapp.com",
+            databaseURL: "https://quiz-e9e15-default-rtdb.firebaseio.com",
+            projectId: "quiz-e9e15",
+            storageBucket: "quiz-e9e15.firebasestorage.app",
+            messagingSenderId: "80407004705",
+            appId: "1:80407004705:web:cfd1af4c7e7e82f1886560"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Making Firebase functions available for Babel script
+        window.fbDB = db;
+        window.fbRef = ref;
+        window.fbSet = set;
+        window.fbPush = push;
+        window.fbOnValue = onValue;
+        window.fbRemove = remove;
+    </script>
+
     <script type="text/babel">
         const { useState, useEffect } = React;
 
         const ADMIN_PASSWORD = "admin786";
-        const SK_R = "qr_v11", SK_Q = "qq_v11", SK_L = "ql_v11";
-
-        const DEFAULT_QUESTIONS = [
-            { id: 1, q: "Pakistan ka qoumi khel kaunsa hai?", a: "Cricket", b: "Hockey", c: "Football", d: "Kabaddi", ans: "b" },
-            { id: 2, q: "MDCAT: Mitochondria ka main function kya hai?", a: "Protein synthesis", b: "Energy production", c: "Waste removal", d: "DNA storage", ans: "b" }
-        ];
-
-        const loadS = (key, fb) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb; } catch { return fb; } };
-        const saveS = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
 
         function App() {
             const [screen, setScreen] = useState("home");
@@ -91,15 +110,33 @@
             const [clicks, setClicks] = useState(0);
             const [bulkText, setBulkText] = useState("");
 
+            // Syncing with Firebase
             useEffect(() => {
-                setQuestions(loadS(SK_Q, DEFAULT_QUESTIONS));
-                setResults(loadS(SK_R, []));
-                setDisplayLimit(loadS(SK_L, 10));
+                const db = window.fbDB;
+                // Get Questions
+                window.fbOnValue(window.fbRef(db, 'questions'), (snapshot) => {
+                    const data = snapshot.val();
+                    setQuestions(data ? Object.values(data) : []);
+                });
+                // Get Results
+                window.fbOnValue(window.fbRef(db, 'results'), (snapshot) => {
+                    const data = snapshot.val();
+                    setResults(data ? Object.values(data).reverse() : []);
+                });
+                // Get Settings
+                window.fbOnValue(window.fbRef(db, 'displayLimit'), (snapshot) => {
+                    const data = snapshot.val();
+                    if(data) setDisplayLimit(data);
+                });
             }, []);
 
             const secretClick = () => { setClicks(c => { if(c+1 >= 5) { setScreen("login"); return 0; } return c+1; }); };
             
-            const startQuiz = () => { if(!name.trim()) return; setCurrent(0); setAnswers({}); setScreen("quiz"); };
+            const startQuiz = () => { 
+                if(!name.trim()) return; 
+                if(questions.length === 0) return alert("Sawal load ho rahe hain ya abhi koi sawal nahi hai.");
+                setCurrent(0); setAnswers({}); setScreen("quiz"); 
+            };
 
             const finishQuiz = (finalAns) => {
                 let score = 0;
@@ -109,9 +146,9 @@
                 const pct = Math.round((score / limit) * 100);
                 
                 const entry = { name: name.trim(), score, total: limit, percentage: pct, time: new Date().toLocaleString() };
-                const updatedResults = [...results, entry];
-                setResults(updatedResults);
-                saveS(SK_R, updatedResults);
+                
+                // Save to Firebase
+                window.fbPush(window.fbRef(window.fbDB, 'results'), entry);
                 setScreen("done");
             };
 
@@ -129,8 +166,9 @@
                         const [q, a, b, c, d, ans] = line.split('|');
                         return { id: Date.now() + i, q:q.trim(), a:a.trim(), b:b.trim(), c:c.trim(), d:d.trim(), ans:ans.trim().toLowerCase() };
                     });
-                    setQuestions(newQs); saveS(SK_Q, newQs);
-                    setBulkText(""); alert("AI Quiz Updated!");
+                    // Save to Firebase
+                    window.fbSet(window.fbRef(window.fbDB, 'questions'), newQs);
+                    setBulkText(""); alert("AI Quiz Updated on Firebase!");
                 } catch(e) { alert("Format galti! Question|A|B|C|D|ans use karein."); }
             };
 
@@ -190,15 +228,15 @@
                             <button className="btn-primary" style={{width:"auto", padding:"8px 20px"}} onClick={()=>setScreen("home")}>Logout</button>
                         </div>
                         <div style={{display:"flex", gap:10, marginBottom:30}}>
-                            <button className="opt-btn" style={{margin:0}} onClick={()=>setAdminView("results")}>View Results</button>
-                            <button className="opt-btn" style={{margin:0}} onClick={()=>setAdminView("ai")}>AI Bulk Import</button>
+                            <button className="opt-btn" style={{margin:0, textAlign:"center"}} onClick={()=>setAdminView("results")}>View Results</button>
+                            <button className="opt-btn" style={{margin:0, textAlign:"center"}} onClick={()=>setAdminView("ai")}>AI Bulk Import</button>
                         </div>
 
                         {adminView === "results" ? (
                             <div className="glass-strong" style={{padding:20}}>
                                 <button className="btn-danger" onClick={() => {
                                     if(window.confirm("Kiya aap tamam results delete karna chahte hain?")) {
-                                        setResults([]); saveS(SK_R, []);
+                                        window.fbRemove(window.fbRef(window.fbDB, 'results'));
                                     }
                                 }}>🗑️ Clear All Results</button>
 
@@ -225,7 +263,7 @@
                             </div>
                         ) : (
                             <div className="glass-strong">
-                                <h3>AI Bulk Import</h3>
+                                <h3>AI Bulk Import (Firebase)</h3>
                                 <textarea className="input-field" style={{height:200, marginTop:15}} 
                                     placeholder="Question|OptionA|OptionB|OptionC|OptionD|ans"
                                     value={bulkText} onChange={e=>setBulkText(e.target.value)} />
