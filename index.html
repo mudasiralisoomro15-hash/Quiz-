@@ -82,7 +82,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Making Firebase functions available for Babel script
         window.fbDB = db;
         window.fbRef = ref;
         window.fbSet = set;
@@ -100,7 +99,8 @@
             const [screen, setScreen] = useState("home");
             const [name, setName] = useState("");
             const [questions, setQuestions] = useState([]);
-            const [displayLimit, setDisplayLimit] = useState(10);
+            // Display Limit ko 1000 kar diya taake "Unlimited" sawal show hon
+            const [displayLimit, setDisplayLimit] = useState(1000); 
             const [results, setResults] = useState([]);
             const [current, setCurrent] = useState(0);
             const [answers, setAnswers] = useState({});
@@ -109,24 +109,18 @@
             const [adminView, setAdminView] = useState("results");
             const [clicks, setClicks] = useState(0);
             const [bulkText, setBulkText] = useState("");
-            
-            // New state for toggling result details
             const [expandedIndex, setExpandedIndex] = useState(null);
 
-            // Syncing with Firebase
             useEffect(() => {
                 const db = window.fbDB;
-                // Get Questions
                 window.fbOnValue(window.fbRef(db, 'questions'), (snapshot) => {
                     const data = snapshot.val();
                     setQuestions(data ? Object.values(data) : []);
                 });
-                // Get Results
                 window.fbOnValue(window.fbRef(db, 'results'), (snapshot) => {
                     const data = snapshot.val();
                     setResults(data ? Object.values(data).reverse() : []);
                 });
-                // Get Settings
                 window.fbOnValue(window.fbRef(db, 'displayLimit'), (snapshot) => {
                     const data = snapshot.val();
                     if(data) setDisplayLimit(data);
@@ -137,21 +131,21 @@
             
             const startQuiz = () => { 
                 if(!name.trim()) return; 
-                if(questions.length === 0) return alert("Sawal load ho rahe hain ya abhi koi sawal nahi hai.");
+                if(questions.length === 0) return alert("Sawal load ho rahe hain...");
                 setCurrent(0); setAnswers({}); setScreen("quiz"); 
             };
 
             const finishQuiz = (finalAns) => {
                 let score = 0;
-                let wrongAnswers = []; // Save mistakes here
-                const limit = Math.min(displayLimit, questions.length);
-                const activeQs = questions.slice(0, limit);
+                let wrongAnswers = [];
+                // Ab limit humesha total questions ke mutabiq hogi
+                const totalToShow = Math.min(displayLimit, questions.length);
+                const activeQs = questions.slice(0, totalToShow);
                 
                 activeQs.forEach((q, i) => { 
                     if(finalAns[i] === q.ans) {
                         score++; 
                     } else {
-                        // Agar galat jawab diya to detail save karo
                         wrongAnswers.push({
                             question: q.q,
                             userSelected: finalAns[i] ? q[finalAns[i]] : "No Answer",
@@ -160,26 +154,24 @@
                     }
                 });
                 
-                const pct = Math.round((score / limit) * 100);
-                
+                const pct = Math.round((score / totalToShow) * 100);
                 const entry = { 
                     name: name.trim(), 
                     score, 
-                    total: limit, 
+                    total: totalToShow, 
                     percentage: pct, 
                     time: new Date().toLocaleString(),
-                    wrongAnswers // Send mistakes to Firebase
+                    wrongAnswers 
                 };
                 
-                // Save to Firebase
                 window.fbPush(window.fbRef(window.fbDB, 'results'), entry);
                 setScreen("done");
             };
 
             const next = () => {
                 const na = {...answers, [current]: selected}; setAnswers(na); setSelected(null);
-                const limit = Math.min(displayLimit, questions.length);
-                if(current + 1 < limit) setCurrent(c => c + 1);
+                const totalToShow = Math.min(displayLimit, questions.length);
+                if(current + 1 < totalToShow) setCurrent(c => c + 1);
                 else finishQuiz(na);
             };
 
@@ -190,9 +182,8 @@
                         const [q, a, b, c, d, ans] = line.split('|');
                         return { id: Date.now() + i, q:q.trim(), a:a.trim(), b:b.trim(), c:c.trim(), d:d.trim(), ans:ans.trim().toLowerCase() };
                     });
-                    // Save to Firebase
                     window.fbSet(window.fbRef(window.fbDB, 'questions'), newQs);
-                    setBulkText(""); alert("AI Quiz Updated on Firebase!");
+                    setBulkText(""); alert("Zabardast! Saare sawal save ho gaye hain.");
                 } catch(e) { alert("Format galti! Question|A|B|C|D|ans use karein."); }
             };
 
@@ -291,14 +282,12 @@
                                                         </button>
                                                     </td>
                                                 </tr>
-                                                
-                                                {/* Expanded Row for Details */}
                                                 {expandedIndex === i && (
                                                     <tr style={{background:"rgba(255,255,255,0.02)"}}>
                                                         <td colSpan="5" style={{padding:"20px 30px"}}>
                                                             {r.score === r.total ? (
                                                                 <p style={{color:"#4ade80", textAlign:"center", margin:0}}>Zabardast! Saare jawab sahi hain. 🎉</p>
-                                                            ) : r.wrongAnswers && r.wrongAnswers.length > 0 ? (
+                                                            ) : r.wrongAnswers ? (
                                                                 <div>
                                                                     <h4 style={{color:"#ef4444", marginBottom:15}}>Galat Jawabaat:</h4>
                                                                     <ul style={{listStyle:"none", padding:0, margin:0}}>
@@ -311,9 +300,7 @@
                                                                         ))}
                                                                     </ul>
                                                                 </div>
-                                                            ) : (
-                                                                <p style={{color:"#888", textAlign:"center", margin:0}}>Yeh purana test hai, iski details mojood nahi.</p>
-                                                            )}
+                                                            ) : <p style={{textAlign:"center"}}>No details.</p>}
                                                         </td>
                                                     </tr>
                                                 )}
@@ -324,7 +311,7 @@
                             </div>
                         ) : (
                             <div className="glass-strong">
-                                <h3>AI Bulk Import (Firebase)</h3>
+                                <h3>AI Bulk Import (Unlimited)</h3>
                                 <textarea className="input-field" style={{height:200, marginTop:15}} 
                                     placeholder="Question|OptionA|OptionB|OptionC|OptionD|ans"
                                     value={bulkText} onChange={e=>setBulkText(e.target.value)} />
