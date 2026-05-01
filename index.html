@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Quiz Portal</title>
+    <title>Quiz Portal</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -13,173 +13,199 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
+
         const ADMIN_PASSWORD = "admin786";
 
-        // Version update to ensure clean data
-        const SK_R = "qr_v8", SK_Q = "qq_v8", SK_L = "ql_v8";
-
         const DEFAULT_QUESTIONS = [
-            { id: 1, q: "Pakistan ka qoumi khel kaunsa hai?", a: "Cricket", b: "Hockey", c: "Football", d: "Kabaddi", ans: "b" },
-            { id: 2, q: "Pakistan ka darul hukumat?", a: "Lahore", b: "Karachi", c: "Islamabad", d: "Peshawar", ans: "c" }
+          { id: 1, q: "Pakistan ka darul hukumat kaunsa shehar hai?", a: "Lahore", b: "Karachi", c: "Islamabad", d: "Peshawar", ans: "c" },
+          { id: 2, q: "Pakistan mein kitne sube hain?", a: "3", b: "4", c: "5", d: "6", ans: "b" },
+          { id: 3, q: "Pakistan ka qoumi khel kaunsa hai?", a: "Cricket", b: "Hockey", c: "Football", d: "Kabaddi", ans: "b" },
+          { id: 4, q: "Pakistan ki qoumi zaban kaunsi hai?", a: "Punjabi", b: "Sindhi", c: "Urdu", d: "Pashto", ans: "c" },
+          { id: 5, q: "Pakistan ka sabse bara shehar kaunsa hai?", a: "Islamabad", b: "Lahore", c: "Karachi", d: "Faisalabad", ans: "c" },
+          { id: 6, q: "Quaid-e-Azam ka poora naam kya tha?", a: "Muhammad Ali Jinnah", b: "Liaquat Ali Khan", c: "Iskander Mirza", d: "Yahya Khan", ans: "a" },
+          { id: 7, q: "Pakistan ka sabse uncha pahad kaunsa hai?", a: "Nanga Parbat", b: "Broad Peak", c: "K2", d: "Tirich Mir", ans: "c" },
+          { id: 8, q: "Pakistan ka qoumi phool kaunsa hai?", a: "Gulab", b: "Chameli", c: "Yasmin", d: "Sunflower", ans: "c" },
+          { id: 9, q: "Pakistan Independence Day kab manaya jata hai?", a: "23 March", b: "14 August", c: "6 September", d: "25 December", ans: "b" },
+          { id: 10, q: "Allama Iqbal ka yom paidaish kab hai?", a: "9 November", b: "14 August", c: "23 March", d: "25 December", ans: "a" },
+          { id: 11, q: "Pakistan mein sabse zyada boli jane wali zaban kaunsi hai?", a: "Urdu", b: "Sindhi", c: "Punjabi", d: "Balochi", ans: "c" },
+          { id: 12, q: "Pakistan ka pehla wazir-e-azam kaun tha?", a: "Ayub Khan", b: "Liaquat Ali Khan", c: "Zulfikar Ali Bhutto", d: "Iskander Mirza", ans: "b" },
+          { id: 13, q: "Badshahi Mosque kahan hai?", a: "Karachi", b: "Islamabad", c: "Lahore", d: "Multan", ans: "c" },
+          { id: 14, q: "Pakistan Resolution kab manzoori hui?", a: "1940", b: "1947", c: "1945", d: "1930", ans: "a" },
+          { id: 15, q: "Pakistan ka qoumi janwar kaunsa hai?", a: "Snow Leopard", b: "Markhor", c: "Lion", d: "Tiger", ans: "b" },
+          { id: 16, q: "Pakistan ne pahli atomic test kab ki?", a: "1998", b: "1990", c: "2000", d: "1985", ans: "a" },
+          { id: 17, q: "CPEC ka poora naam kya hai?", a: "China Pakistan Economic Corridor", b: "Central Pakistan Economic Corridor", c: "China Pakistan Export Cooperation", d: "Central Pakistan Export Corridor", ans: "a" },
+          { id: 18, q: "Faisal Mosque kahan hai?", a: "Lahore", b: "Karachi", c: "Islamabad", d: "Rawalpindi", ans: "c" },
+          { id: 19, q: "Pakistan ka sabse bara desert kaunsa hai?", a: "Thal Desert", b: "Thar Desert", c: "Cholistan", d: "Kharan", ans: "b" },
+          { id: 20, q: "Gwadar kis sube mein hai?", a: "Sindh", b: "Punjab", c: "KPK", d: "Balochistan", ans: "d" },
+          { id: 21, q: "Pakistan ka currency kya hai?", a: "Taka", b: "Rupee", c: "Dinar", d: "Dirham", ans: "b" },
+          { id: 22, q: "Simla Agreement kab hua?", a: "1971", b: "1972", c: "1973", d: "1965", ans: "b" },
+          { id: 23, q: "Pakistan mein kitni official languages hain?", a: "1", b: "2", c: "3", d: "4", ans: "b" },
+          { id: 24, q: "Lahore ka purana naam kya tha?", a: "Lahanour", b: "Loh-awar", c: "Lavapuri", d: "Lahwar", ans: "b" },
+          { id: 25, q: "Pakistan ka qoumi darya kaunsa hai?", a: "Ravi", b: "Jhelum", c: "Chenab", d: "Indus (Sindh)", ans: "d" },
+          { id: 26, q: "Quaid-e-Azam ki date of birth kya hai?", a: "25 December 1876", b: "14 August 1947", c: "23 March 1940", d: "11 September 1948", ans: "a" },
+          { id: 27, q: "Pakistan ka area kitna hai (approximately)?", a: "581,000 sq km", b: "796,095 sq km", c: "450,000 sq km", d: "900,000 sq km", ans: "b" },
+          { id: 28, q: "Pakistan ka qoumi panda (bird) kaunsa hai?", a: "Parrot", b: "Eagle", c: "Chukar Partridge", d: "Peacock", ans: "c" },
+          { id: 29, q: "Pakistan mein sabse pehle Olympic gold medal kisne jita?", a: "Jahangir Khan", b: "Pakistan Hockey Team", c: "Imran Khan", d: "Arshad Nadeem", ans: "b" },
+          { id: 30, q: "Pakistan ka sabse bara shehar surface area mein kaunsa hai?", a: "Karachi", b: "Lahore", c: "Quetta", d: "Hyderabad", ans: "a" },
         ];
 
+        // Updated keys to avoid conflicts
+        const SK_R = "qr_v7", SK_Q = "qq_v7", SK_L = "ql_v7";
+        
         const loadS = (key, fb) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb; } catch { return fb; } };
         const saveS = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
 
+        const SCREEN = { HOME:"home", QUIZ:"quiz", DONE:"done", ADMIN:"admin", LOGIN:"login" };
+
         function App() {
-            const [screen, setScreen] = useState("home");
-            const [name, setName] = useState("");
-            const [questions, setQuestions] = useState([]);
-            const [displayLimit, setDisplayLimit] = useState(10);
-            const [results, setResults] = useState([]);
-            const [current, setCurrent] = useState(0);
-            const [answers, setAnswers] = useState({});
-            const [selected, setSelected] = useState(null);
-            const [adminPass, setAdminPass] = useState("");
-            const [adminView, setAdminView] = useState("results");
-            const [clicks, setClicks] = useState(0);
-            const [editQ, setEditQ] = useState(null);
-            const [bulkText, setBulkText] = useState("");
+          const [screen, setScreen] = useState(SCREEN.HOME);
+          const [name, setName] = useState("");
+          const [questions, setQuestions] = useState([]);
+          const [displayLimit, setDisplayLimit] = useState(10);
+          const [results, setResults] = useState([]);
+          const [current, setCurrent] = useState(0);
+          const [answers, setAnswers] = useState({});
+          const [selected, setSelected] = useState(null);
+          const [adminPass, setAdminPass] = useState("");
+          const [adminError, setAdminError] = useState(false);
+          const [adminView, setAdminView] = useState("results");
+          const [clicks, setClicks] = useState(0);
+          const [editQ, setEditQ] = useState(null);
 
-            useEffect(() => {
-                setQuestions(loadS(SK_Q, DEFAULT_QUESTIONS));
-                setResults(loadS(SK_R, []));
-                setDisplayLimit(loadS(SK_L, 10));
-            }, []);
+          useEffect(() => {
+            setQuestions(loadS(SK_Q, DEFAULT_QUESTIONS));
+            setResults(loadS(SK_R, []));
+            setDisplayLimit(loadS(SK_L, 10));
+          }, []);
 
-            const secretClick = () => { setClicks(c => { if(c+1 >= 5) { setScreen("login"); return 0; } return c+1; }); };
-            
-            const handleBulkImport = () => {
-                const lines = bulkText.split('\n').filter(l => l.trim() !== "");
-                const newQs = lines.map((line, index) => {
-                    const [q, a, b, c, d, ans] = line.split('|');
-                    return { id: Date.now() + index, q, a, b, c, d, ans: ans?.trim().toLowerCase() };
-                });
-                if(newQs.length > 0) {
-                    setQuestions(newQs);
-                    saveS(SK_Q, newQs);
-                    setBulkText("");
-                    alert("Quiz Updated Successfully!");
-                }
-            };
+          const secretClick = () => { const n = clicks+1; setClicks(n); if(n>=5){setClicks(0);setScreen(SCREEN.LOGIN);} };
+          const startQuiz = () => { if(!name.trim()) return; setCurrent(0); setAnswers({}); setScreen(SCREEN.QUIZ); };
+          
+          const next = () => {
+            const na = {...answers,[current]:selected}; setAnswers(na); setSelected(null);
+            if(current+1 < displayLimit && current+1 < questions.length){ setCurrent(c=>c+1); }
+            else {
+              let score=0;
+              const activeQs = questions.slice(0, displayLimit);
+              activeQs.forEach((q,i)=>{ if(na[i]===q.ans) score++; });
+              const nr=[...results,{name:name.trim(),score,total:displayLimit,time:new Date().toLocaleString()}];
+              setResults(nr); saveS(SK_R,nr); setScreen(SCREEN.DONE);
+            }
+          };
 
-            const finishQuiz = (finalAnswers) => {
-                let score = 0;
-                const activeQs = questions.slice(0, displayLimit);
-                activeQs.forEach((q, i) => { if (finalAnswers[i] === q.ans) score++; });
-                const percentage = Math.round((score / displayLimit) * 100);
-                const nr = [...results, { name: name.trim(), score, total: displayLimit, percentage, time: new Date().toLocaleString() }];
-                setResults(nr); saveS(SK_R, nr); setScreen("done");
-            };
+          const saveQuestion = (qObj) => { const u = questions.map(q => q.id === qObj.id ? qObj : q); setQuestions(u); saveS(SK_Q, u); setEditQ(null); };
 
-            const next = () => {
-                const na = { ...answers, [current]: selected }; setAnswers(na); setSelected(null);
-                if (current + 1 < displayLimit && current + 1 < questions.length) { setCurrent(c => c + 1); }
-                else { finishQuiz(na); }
-            };
+          const G = `
+            *{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif;}
+            .card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:40px; color:#fff; width:100%; max-width:460px; text-align:center; }
+            .btn { width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(135deg, #6366f1, #8b5cf6); color:white; font-size:16px; font-weight:600; cursor:pointer; margin-top:10px; }
+            .input { width:100%; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; margin-bottom:20px; outline:none;}
+            .opt-btn { width:100%; padding:14px; margin-bottom:10px; border-radius:12px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#cbd5e1; }
+          `;
 
-            const G = `
-                *{box-sizing:border-box;font-family:sans-serif;}
-                .card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:30px; color:white; width:100%; max-width:500px; }
-                .btn { width:100%; padding:12px; border-radius:10px; border:none; background:linear-gradient(to right, #6366f1, #a855f7); color:white; font-weight:bold; cursor:pointer; margin:5px 0; }
-                .input { width:100%; padding:12px; border-radius:10px; border:1px solid #333; background:#111; color:white; margin-bottom:15px; }
-                .opt { width:100%; padding:12px; margin:5px 0; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid #333; color:white; text-align:left; cursor:pointer; }
-            `;
+          if(screen===SCREEN.HOME) return (
+            <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
+              <style>{G}</style>
+              <div className="card">
+                <h1 style={{fontSize:"40px", marginBottom:"10px"}}>Welcome!</h1>
+                <p style={{color:"#9ca3af", marginBottom:"30px"}}>Apna naam likhein aur quiz shuru karein</p>
+                <input className="input" placeholder="Your Name..." value={name} onChange={e=>setName(e.target.value)} />
+                <button className="btn" onClick={startQuiz}>Quiz Shuru Karein →</button>
+                <div style={{marginTop:"30px", color:"#080810", cursor:"pointer", userSelect:"none"}} onClick={secretClick}>● ● ●</div>
+              </div>
+            </div>
+          );
 
-            if (screen === "home") return (
-                <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
-                    <style>{G}</style>
-                    <div className="card" style={{textAlign:"center"}}>
-                        <h1>Welcome!</h1>
-                        <p style={{color:"#888"}}>Enter your name to start the quiz</p>
-                        <input className="input" placeholder="Your Name..." onChange={e=>setName(e.target.value)} />
-                        <button className="btn" onClick={() => name.trim() && setScreen("quiz")}>Start Quiz →</button>
-                        <div onClick={secretClick} style={{marginTop:40, color:"#080810", userSelect:"none"}}>● ● ●</div>
-                    </div>
+          if(screen===SCREEN.LOGIN) return (
+            <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center"}}>
+              <style>{G}</style>
+              <div className="card" style={{maxWidth:"360px"}}>
+                <h2 style={{marginBottom:"20px"}}>Admin Access</h2>
+                <input className="input" type="password" placeholder="Password..." value={adminPass} onChange={e=>setAdminPass(e.target.value)} />
+                <button className="btn" onClick={()=>{if(adminPass===ADMIN_PASSWORD) setScreen(SCREEN.ADMIN); else setAdminError(true);}}>Login</button>
+                {adminError && <p style={{color:"#f87171", marginTop:"10px"}}>Wrong Password</p>}
+              </div>
+            </div>
+          );
+
+          if(screen===SCREEN.QUIZ) return (
+            <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
+              <style>{G}</style>
+              <div className="card" style={{maxWidth:"600px", textAlign:"left"}}>
+                <h2 style={{marginBottom:"25px"}}>{questions[current]?.q}</h2>
+                {["a","b","c","d"].map(opt => (
+                  <button key={opt} className="opt-btn" onClick={()=>setSelected(opt)} style={{border:selected===opt?"1px solid #6366f1":""}}>
+                    <span style={{background:selected===opt?"#6366f1":"rgba(255,255,255,0.1)", padding:"5px 10px", borderRadius:"8px"}}>{opt.toUpperCase()}</span>
+                    {questions[current][opt]}
+                  </button>
+                ))}
+                <button className="btn" onClick={next} disabled={!selected} style={{opacity:selected?1:0.5}}>Next →</button>
+              </div>
+            </div>
+          );
+
+          if(screen===SCREEN.DONE) return (
+            <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center"}}>
+              <style>{G}</style>
+              <div className="card">
+                <h1 style={{color:"#4ade80"}}>Shukriya!</h1>
+                <p style={{marginTop:"15px", color:"#e2e8f0"}}>{name}, aapne quiz mukammal kar liya.</p>
+                <p style={{color:"#9ca3af", marginBottom:"25px"}}>Results group mein send kar diye jayenge.</p>
+                <button className="btn" onClick={()=>{setScreen(SCREEN.HOME);setName("");}}>دوسرا شخص →</button>
+              </div>
+            </div>
+          );
+
+          if(screen===SCREEN.ADMIN) return (
+            <div style={{minHeight:"100vh", background:"#080810", color:"white", padding:"20px"}}>
+              <div style={{maxWidth:"800px", margin:"0 auto", background:"rgba(255,255,255,0.05)", padding:"20px", borderRadius:"20px"}}>
+                <div style={{display:"flex", justifyContent:"space-between", marginBottom:"20px"}}>
+                  <h2>🛡️ Admin Panel</h2>
+                  <div style={{display:"flex", gap:"10px"}}>
+                    <button onClick={()=>setAdminView("results")} className="btn" style={{padding:"8px 15px", margin:0, background: adminView==="results"?"#6366f1":"#4b5563"}}>Results</button>
+                    <button onClick={()=>setAdminView("questions")} className="btn" style={{padding:"8px 15px", margin:0, background: adminView==="questions"?"#6366f1":"#4b5563"}}>Questions</button>
+                    <button onClick={()=>setScreen(SCREEN.HOME)} className="btn" style={{padding:"8px 15px", margin:0, background:"#ef4444"}}>Logout</button>
+                  </div>
                 </div>
-            );
 
-            if (screen === "login") return (
-                <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center"}}>
-                    <style>{G}</style>
-                    <div className="card">
-                        <h2>Admin Login</h2>
-                        <input className="input" type="password" onChange={e=>setAdminPass(e.target.value)} />
-                        <button className="btn" onClick={() => adminPass === ADMIN_PASSWORD && setScreen("admin")}>Login</button>
+                {adminView === "results" ? (
+                  <div>
+                    <div style={{marginBottom:"20px"}}>
+                      <label>Kitne Sawal Dikhane Hain? </label>
+                      <select value={displayLimit} onChange={(e)=>{setDisplayLimit(e.target.value); saveS(SK_L, e.target.value);}} style={{padding:"8px", borderRadius:"8px", background:"#111", color:"white"}}>
+                          <option value="5">5 Questions</option><option value="10">10 Questions</option><option value="20">20 Questions</option><option value="30">30 Questions</option>
+                      </select>
                     </div>
-                </div>
-            );
-
-            if (screen === "quiz") return (
-                <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
-                    <style>{G}</style>
-                    <div className="card">
-                        <p style={{color:"#6366f1"}}>Question {current+1} of {displayLimit}</p>
-                        <h3 style={{margin:"20px 0"}}>{questions[current]?.q}</h3>
-                        {["a","b","c","d"].map(o => (
-                            <button key={o} className="opt" onClick={()=>setSelected(o)} style={{borderColor:selected===o?"#6366f1":"#333"}}>{o.toUpperCase()}) {questions[current]?.[o]}</button>
-                        ))}
-                        <button className="btn" onClick={next} disabled={!selected}>Next</button>
-                    </div>
-                </div>
-            );
-
-            if (screen === "done") return (
-                <div style={{minHeight:"100vh", background:"#080810", display:"flex", alignItems:"center", justifyContent:"center", textAlign:"center"}}>
-                    <style>{G}</style>
-                    <div className="card">
-                        <h1 style={{color:"#4ade80"}}>Shukriya!</h1>
-                        <p>{name}, aapka quiz mukammal ho gaya.</p>
-                        <p style={{color:"#888", fontSize:"14px"}}>Results group mein send kar diye jayenge.</p>
-                        <button className="btn" onClick={() => window.location.reload()}>دوسرا شخص →</button>
-                    </div>
-                </div>
-            );
-
-            if (screen === "admin") return (
-                <div style={{padding:20, color:"white", background:"#080810", minHeight:"100vh"}}>
-                    <style>{G}</style>
-                    <div style={{maxWidth:800, margin:"auto"}}>
-                        <div style={{display:"flex", justifyContent:"space-between", marginBottom:20}}>
-                            <h2>🛡️ Admin Panel</h2>
-                            <button className="btn" style={{width:"auto", padding:"5px 15px"}} onClick={()=>setScreen("home")}>Logout</button>
+                    <table style={{width:"100%", borderCollapse:"collapse"}}>
+                      <thead><tr style={{background:"rgba(255,255,255,0.1)"}}><th style={{padding:"10px", textAlign:"left"}}>Name</th><th style={{padding:"10px", textAlign:"left"}}>Score</th><th style={{padding:"10px", textAlign:"left"}}>Time</th></tr></thead>
+                      <tbody>{results.map((r,i)=>(<tr key={i} style={{borderBottom:"1px solid #222"}}><td style={{padding:"10px"}}>{r.name}</td><td style={{padding:"10px"}}>{r.score}/{r.total}</td><td style={{padding:"10px", color:"#9ca3af"}}>{r.time}</td></tr>))}</tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div>
+                    {editQ ? (
+                        <div style={{background:"#111", padding:"20px", borderRadius:"12px"}}>
+                            <h3>Edit Question</h3>
+                            <input className="input" value={editQ.q} onChange={e=>setEditQ({...editQ, q:e.target.value})} />
+                            {["a","b","c","d"].map(o=>(<input key={o} className="input" value={editQ[o]} onChange={e=>setEditQ({...editQ, [o]:e.target.value})} />))}
+                            <button className="btn" onClick={()=>saveQuestion(editQ)}>Save Changes</button>
+                            <button className="btn" style={{background:"#ef4444"}} onClick={()=>setEditQ(null)}>Cancel</button>
                         </div>
-                        
-                        <div style={{display:"flex", gap:10, marginBottom:20}}>
-                            <button className="btn" onClick={()=>setAdminView("results")}>Results</button>
-                            <button className="btn" style={{background:"#444"}} onClick={()=>setAdminView("ai")}>AI Bulk Import</button>
-                        </div>
-
-                        {adminView === "results" ? (
-                            <table style={{width:"100%", borderCollapse:"collapse"}}>
-                                <thead style={{background:"#222"}}>
-                                    <tr><th style={{padding:10}}>Name</th><th style={{padding:10}}>Score</th><th style={{padding:10}}>%</th><th style={{padding:10}}>Time</th></tr>
-                                </thead>
-                                <tbody>
-                                    {results.map((r,i) => (
-                                        <tr key={i} style={{borderBottom:"1px solid #222", textAlign:"center"}}>
-                                            <td style={{padding:10}}>{r.name}</td>
-                                            <td style={{padding:10}}>{r.score}/{r.total}</td>
-                                            <td style={{padding:10, color:"#4ade80"}}>{r.percentage}%</td>
-                                            <td style={{padding:10, color:"#666"}}>{r.time}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        ) : (
-                            <div>
-                                <h3>AI Bulk Import</h3>
-                                <p style={{fontSize:12, color:"#888"}}>AI se sawal banwa kar yahan paste karein (Format: Question|A|B|C|D|ans)</p>
-                                <textarea className="input" style={{height:150}} value={bulkText} onChange={e=>setBulkText(e.target.value)} placeholder="Physics Question|Opt1|Opt2|Opt3|Opt4|c"></textarea>
-                                <button className="btn" onClick={handleBulkImport}>Update Quiz Now</button>
+                    ) : (
+                        questions.map(q=>(
+                            <div key={q.id} style={{display:"flex", justifyContent:"space-between", padding:"15px", borderBottom:"1px solid #333"}}>
+                                <span>{q.q}</span>
+                                <button onClick={()=>setEditQ(q)} style={{background:"#6366f1", border:"none", color:"white", padding:"5px 12px", borderRadius:"8px", cursor:"pointer"}}>Edit</button>
                             </div>
-                        )}
-                    </div>
-                </div>
-            );
+                        ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
         }
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
-
