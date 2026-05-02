@@ -93,19 +93,22 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        const ADMIN_PASSWORD = "admin786";
-
         function App() {
             const [screen, setScreen] = useState("home");
             const [name, setName] = useState("");
             const [questions, setQuestions] = useState([]);
-            // Display Limit ko 1000 kar diya taake "Unlimited" sawal show hon
             const [displayLimit, setDisplayLimit] = useState(1000); 
             const [results, setResults] = useState([]);
             const [current, setCurrent] = useState(0);
             const [answers, setAnswers] = useState({});
             const [selected, setSelected] = useState(null);
+            
+            // Password States
             const [adminPass, setAdminPass] = useState("");
+            const [dbAdminPassword, setDbAdminPassword] = useState("admin786"); // Default password
+            const [showPassSettings, setShowPassSettings] = useState(false);
+            const [newPassword, setNewPassword] = useState("");
+
             const [adminView, setAdminView] = useState("results");
             const [clicks, setClicks] = useState(0);
             const [bulkText, setBulkText] = useState("");
@@ -125,6 +128,11 @@
                     const data = snapshot.val();
                     if(data) setDisplayLimit(data);
                 });
+                // Fetch dynamic password from Firebase
+                window.fbOnValue(window.fbRef(db, 'settings/adminPassword'), (snapshot) => {
+                    const data = snapshot.val();
+                    if(data) setDbAdminPassword(data);
+                });
             }, []);
 
             const secretClick = () => { setClicks(c => { if(c+1 >= 5) { setScreen("login"); return 0; } return c+1; }); };
@@ -138,7 +146,6 @@
             const finishQuiz = (finalAns) => {
                 let score = 0;
                 let wrongAnswers = [];
-                // Ab limit humesha total questions ke mutabiq hogi
                 const totalToShow = Math.min(displayLimit, questions.length);
                 const activeQs = questions.slice(0, totalToShow);
                 
@@ -187,6 +194,14 @@
                 } catch(e) { alert("Format galti! Question|A|B|C|D|ans use karein."); }
             };
 
+            const updatePassword = () => {
+                if(newPassword.trim().length < 4) return alert("Password kam az kam 4 characters ka hona chahiye.");
+                window.fbSet(window.fbRef(window.fbDB, 'settings/adminPassword'), newPassword.trim());
+                alert("Password kamyabi se change ho gaya!");
+                setNewPassword("");
+                setShowPassSettings(false);
+            };
+
             if(screen === "home") return (
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:20}}>
                     <div className="glass-strong fade-up" style={{width:"100%", maxWidth:400, textAlign:"center"}}>
@@ -204,7 +219,8 @@
                     <div className="glass-strong" style={{width:320}}>
                         <h2 style={{color:"white", marginBottom:20}}>Admin Panel</h2>
                         <input className="input-field" type="password" placeholder="Password..." onChange={e=>setAdminPass(e.target.value)} />
-                        <button className="btn-primary" onClick={() => adminPass === ADMIN_PASSWORD && setScreen("admin")}>Login</button>
+                        {/* Yahan dbAdminPassword check ho raha hai */}
+                        <button className="btn-primary" onClick={() => adminPass === dbAdminPassword ? setScreen("admin") : alert("Galat Password!")}>Login</button>
                     </div>
                 </div>
             );
@@ -239,9 +255,22 @@
                 <div style={{padding:40, color:"white"}}>
                     <div style={{maxWidth:900, margin:"auto"}}>
                         <div style={{display:"flex", justifyContent:"space-between", marginBottom:30}}>
-                            <h2>🛡️ Control Panel</h2>
-                            <button className="btn-primary" style={{width:"auto", padding:"8px 20px"}} onClick={()=>setScreen("home")}>Logout</button>
+                            {/* Hidden Setting: Control Panel par click karne se show/hide hoga */}
+                            <h2 style={{cursor:"pointer", userSelect:"none"}} onClick={() => setShowPassSettings(!showPassSettings)}>🛡️ Control Panel</h2>
+                            <button className="btn-primary" style={{width:"auto", padding:"8px 20px"}} onClick={() => {setScreen("home"); setAdminPass("");}}>Logout</button>
                         </div>
+                        
+                        {/* Hidden Password Setting Area */}
+                        {showPassSettings && (
+                            <div className="glass-strong fade-up" style={{marginBottom:30, padding:20}}>
+                                <h3 style={{marginBottom:15, color:"#a855f7"}}>Admin Password Change</h3>
+                                <div style={{display:"flex", gap:10}}>
+                                    <input className="input-field" style={{marginBottom:0}} type="text" placeholder="Naya Password likhein..." value={newPassword} onChange={e=>setNewPassword(e.target.value)} />
+                                    <button className="btn-primary" style={{width:"auto", padding:"0 20px"}} onClick={updatePassword}>Save</button>
+                                </div>
+                            </div>
+                        )}
+
                         <div style={{display:"flex", gap:10, marginBottom:30}}>
                             <button className="opt-btn" style={{margin:0, textAlign:"center"}} onClick={()=>setAdminView("results")}>View Results</button>
                             <button className="opt-btn" style={{margin:0, textAlign:"center"}} onClick={()=>setAdminView("ai")}>AI Bulk Import</button>
