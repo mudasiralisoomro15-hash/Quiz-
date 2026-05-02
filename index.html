@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Quiz Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -18,6 +17,7 @@
         ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 3px; }
 
         @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse { 0%,100% { opacity:.6; } 50% { opacity:1; } }
         @keyframes glow { 0%,100% { box-shadow: 0 0 20px rgba(99,102,241,0.2); } 50% { box-shadow: 0 0 40px rgba(168,85,247,0.4); } }
         
         .fade-up { animation: fadeUp 0.5s ease both; }
@@ -58,6 +58,7 @@
             border: none; border-radius: 12px; cursor: pointer; font-weight: 600;
             transition: 0.2s; margin-bottom: 20px;
         }
+        .btn-danger:hover { background: #dc2626; transform: scale(1.02); }
     </style>
 </head>
 <body class="bg-grid">
@@ -67,6 +68,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+        // Aapka Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBUUVU_-RNoEXk-M-sw72pzg0IwzvtcgaM",
             authDomain: "quiz-e9e15.firebaseapp.com",
@@ -91,22 +93,19 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        const ADMIN_PASSWORD = "admin786";
+
         function App() {
             const [screen, setScreen] = useState("home");
             const [name, setName] = useState("");
             const [questions, setQuestions] = useState([]);
+            // Display Limit ko 1000 kar diya taake "Unlimited" sawal show hon
             const [displayLimit, setDisplayLimit] = useState(1000); 
             const [results, setResults] = useState([]);
             const [current, setCurrent] = useState(0);
             const [answers, setAnswers] = useState({});
             const [selected, setSelected] = useState(null);
-            
             const [adminPass, setAdminPass] = useState("");
-            const [dbAdminPassword, setDbAdminPassword] = useState("admin786");
-            const [showPassSettings, setShowPassSettings] = useState(false);
-            const [newPassword, setNewPassword] = useState("");
-            const [passClicks, setPassClicks] = useState(0); 
-
             const [adminView, setAdminView] = useState("results");
             const [clicks, setClicks] = useState(0);
             const [bulkText, setBulkText] = useState("");
@@ -126,24 +125,10 @@
                     const data = snapshot.val();
                     if(data) setDisplayLimit(data);
                 });
-                window.fbOnValue(window.fbRef(db, 'settings/adminPassword'), (snapshot) => {
-                    const data = snapshot.val();
-                    if(data) setDbAdminPassword(data);
-                });
             }, []);
 
             const secretClick = () => { setClicks(c => { if(c+1 >= 5) { setScreen("login"); return 0; } return c+1; }); };
             
-            const triggerPassSettings = () => {
-                setPassClicks(prev => {
-                    if(prev + 1 >= 5) {
-                        setShowPassSettings(!showPassSettings);
-                        return 0;
-                    }
-                    return prev + 1;
-                });
-            };
-
             const startQuiz = () => { 
                 if(!name.trim()) return; 
                 if(questions.length === 0) return alert("Sawal load ho rahe hain...");
@@ -153,12 +138,14 @@
             const finishQuiz = (finalAns) => {
                 let score = 0;
                 let wrongAnswers = [];
+                // Ab limit humesha total questions ke mutabiq hogi
                 const totalToShow = Math.min(displayLimit, questions.length);
                 const activeQs = questions.slice(0, totalToShow);
                 
                 activeQs.forEach((q, i) => { 
-                    if(finalAns[i] === q.ans) score++; 
-                    else {
+                    if(finalAns[i] === q.ans) {
+                        score++; 
+                    } else {
                         wrongAnswers.push({
                             question: q.q,
                             userSelected: finalAns[i] ? q[finalAns[i]] : "No Answer",
@@ -167,18 +154,24 @@
                     }
                 });
                 
+                const pct = Math.round((score / totalToShow) * 100);
                 const entry = { 
-                    name: name.trim(), score, total: totalToShow, 
-                    percentage: Math.round((score / totalToShow) * 100), 
-                    time: new Date().toLocaleString(), wrongAnswers 
+                    name: name.trim(), 
+                    score, 
+                    total: totalToShow, 
+                    percentage: pct, 
+                    time: new Date().toLocaleString(),
+                    wrongAnswers 
                 };
+                
                 window.fbPush(window.fbRef(window.fbDB, 'results'), entry);
                 setScreen("done");
             };
 
             const next = () => {
                 const na = {...answers, [current]: selected}; setAnswers(na); setSelected(null);
-                if(current + 1 < Math.min(displayLimit, questions.length)) setCurrent(c => c + 1);
+                const totalToShow = Math.min(displayLimit, questions.length);
+                if(current + 1 < totalToShow) setCurrent(c => c + 1);
                 else finishQuiz(na);
             };
 
@@ -190,24 +183,17 @@
                         return { id: Date.now() + i, q:q.trim(), a:a.trim(), b:b.trim(), c:c.trim(), d:d.trim(), ans:ans.trim().toLowerCase() };
                     });
                     window.fbSet(window.fbRef(window.fbDB, 'questions'), newQs);
-                    setBulkText(""); alert("Saved!");
-                } catch(e) { alert("Format Error!"); }
-            };
-
-            const updatePassword = () => {
-                if(newPassword.trim().length < 4) return alert("Password too short!");
-                window.fbSet(window.fbRef(window.fbDB, 'settings/adminPassword'), newPassword.trim());
-                alert("Password Updated!");
-                setNewPassword("");
-                setShowPassSettings(false);
+                    setBulkText(""); alert("Zabardast! Saare sawal save ho gaye hain.");
+                } catch(e) { alert("Format galti! Question|A|B|C|D|ans use karein."); }
             };
 
             if(screen === "home") return (
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:20}}>
                     <div className="glass-strong fade-up" style={{width:"100%", maxWidth:400, textAlign:"center"}}>
                         <h1 style={{color:"white", fontSize:32, marginBottom:10}}>Welcome!</h1>
+                        <p style={{color:"#888", marginBottom:30}}>Enter your name to start</p>
                         <input className="input-field" placeholder="Full Name..." onChange={e=>setName(e.target.value)} />
-                        <button className="btn-primary" onClick={startQuiz}>Start Quiz →</button>
+                        <button className="btn-primary" onClick={startQuiz}>Quiz Shuru Karein →</button>
                         <div onClick={secretClick} style={{marginTop:40, opacity:0.01, cursor:"default"}}>● ● ●</div>
                     </div>
                 </div>
@@ -218,7 +204,7 @@
                     <div className="glass-strong" style={{width:320}}>
                         <h2 style={{color:"white", marginBottom:20}}>Admin Panel</h2>
                         <input className="input-field" type="password" placeholder="Password..." onChange={e=>setAdminPass(e.target.value)} />
-                        <button className="btn-primary" onClick={() => adminPass === dbAdminPassword ? setScreen("admin") : alert("Wrong Password!")}>Login</button>
+                        <button className="btn-primary" onClick={() => adminPass === ADMIN_PASSWORD && setScreen("admin")}>Login</button>
                     </div>
                 </div>
             );
@@ -226,14 +212,14 @@
             if(screen === "quiz") return (
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:20}}>
                     <div className="glass-strong fade-up" style={{width:"100%", maxWidth:600}}>
-                        <p style={{color:"#6366f1", marginBottom:10}}>Question {current+1}</p>
-                        <h3 style={{color:"white", marginBottom:25}}>{questions[current]?.q}</h3>
+                        <p style={{color:"#6366f1", marginBottom:10}}>Question {current+1} of {Math.min(displayLimit, questions.length)}</p>
+                        <h3 style={{color:"white", marginBottom:25, fontSize:20}}>{questions[current]?.q}</h3>
                         {['a','b','c','d'].map(o => (
                             <button key={o} className={`opt-btn ${selected===o?'selected':''}`} onClick={()=>setSelected(o)}>
-                                {o.toUpperCase()}) {questions[current]?.[o]}
+                                <span style={{marginRight:10, color:"#6366f1"}}>{o.toUpperCase()}</span> {questions[current]?.[o]}
                             </button>
                         ))}
-                        <button className="btn-primary" style={{marginTop:20}} onClick={next} disabled={!selected}>Next</button>
+                        <button className="btn-primary" style={{marginTop:20}} onClick={next} disabled={!selected}>Next →</button>
                     </div>
                 </div>
             );
@@ -241,68 +227,98 @@
             if(screen === "done") return (
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", textAlign:"center"}}>
                     <div className="glass-strong fade-up">
-                        <h1 style={{color:"#4ade80"}}>Done!</h1>
-                        <p style={{color:"white", margin:"20px 0"}}>Thank you, {name}.</p>
-                        <button className="btn-primary" onClick={()=>window.location.reload()}>Next Person</button>
+                        <h1 style={{color:"#4ade80", fontSize:40}}>Shukriya!</h1>
+                        <p style={{color:"white", margin:"20px 0"}}>{name}, aapka quiz save ho gaya hai.</p>
+                        <p style={{color:"#888", marginBottom:30}}>Results group mein send kar diye jayenge.</p>
+                        <button className="btn-primary" onClick={()=>window.location.reload()}>دوسرا شخص →</button>
                     </div>
                 </div>
             );
 
             if(screen === "admin") return (
-                <div style={{padding:20, color:"white", maxWidth:900, margin:"auto"}}>
-                    <div style={{display:"flex", justifyContent:"space-between", marginBottom:30}}>
-                        {/* 5 Clicks Trigger Password Settings */}
-                        <h2 style={{cursor:"default", userSelect:"none"}} onClick={triggerPassSettings}>🛡️ Control Panel</h2>
-                        <button className="btn-primary" style={{width:"auto"}} onClick={() => setScreen("home")}>Logout</button>
-                    </div>
-                    
-                    {showPassSettings && (
-                        <div className="glass-strong fade-up" style={{marginBottom:30, padding:20, border:"1px solid #a855f7"}}>
-                            <h3 style={{marginBottom:15, color:"#a855f7"}}>Change Password</h3>
-                            <div style={{display:"flex", gap:10}}>
-                                <input className="input-field" style={{marginBottom:0}} type="text" placeholder="New Password..." value={newPassword} onChange={e=>setNewPassword(e.target.value)} />
-                                <button className="btn-primary" style={{width:"auto", padding:"0 20px"}} onClick={updatePassword}>Save</button>
-                            </div>
+                <div style={{padding:40, color:"white"}}>
+                    <div style={{maxWidth:900, margin:"auto"}}>
+                        <div style={{display:"flex", justifyContent:"space-between", marginBottom:30}}>
+                            <h2>🛡️ Control Panel</h2>
+                            <button className="btn-primary" style={{width:"auto", padding:"8px 20px"}} onClick={()=>setScreen("home")}>Logout</button>
                         </div>
-                    )}
+                        <div style={{display:"flex", gap:10, marginBottom:30}}>
+                            <button className="opt-btn" style={{margin:0, textAlign:"center"}} onClick={()=>setAdminView("results")}>View Results</button>
+                            <button className="opt-btn" style={{margin:0, textAlign:"center"}} onClick={()=>setAdminView("ai")}>AI Bulk Import</button>
+                        </div>
 
-                    <div style={{display:"flex", gap:10, marginBottom:30}}>
-                        <button className="opt-btn" style={{margin:0, textAlign:"center"}} onClick={()=>setAdminView("results")}>View Results</button>
-                        <button className="opt-btn" style={{margin:0, textAlign:"center"}} onClick={()=>setAdminView("ai")}>AI Import</button>
-                    </div>
+                        {adminView === "results" ? (
+                            <div className="glass-strong" style={{padding:20}}>
+                                <button className="btn-danger" onClick={() => {
+                                    if(window.confirm("Kiya aap tamam results delete karna chahte hain?")) {
+                                        window.fbRemove(window.fbRef(window.fbDB, 'results'));
+                                    }
+                                }}>🗑️ Clear All Results</button>
 
-                    {adminView === "results" ? (
-                        <div className="glass-strong" style={{overflowX:"auto"}}>
-                            <button className="btn-danger" onClick={() => window.confirm("Delete all?") && window.fbRemove(window.fbRef(window.fbDB, 'results'))}>Clear All</button>
-                            <table style={{width:"100%", borderCollapse:"collapse"}}>
-                                <thead>
-                                    <tr style={{borderBottom:"2px solid #222", color:"#6366f1"}}>
-                                        <th style={{padding:10}}>Name</th>
-                                        <th style={{padding:10}}>Score</th>
-                                        <th style={{padding:10}}>Time</th>
-                                        <th style={{padding:10}}>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {results.map((r,i) => (
-                                        <tr key={i} style={{borderBottom:"1px solid #222"}}>
-                                            <td style={{padding:10}}>{r.name}</td>
-                                            <td style={{padding:10}}>{r.score}/{r.total}</td>
-                                            <td style={{padding:10}}>{r.time}</td>
-                                            <td style={{padding:10}}>
-                                                <button onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}>View</button>
-                                            </td>
+                                <table style={{width:"100%", borderCollapse:"collapse"}}>
+                                    <thead>
+                                        <tr style={{borderBottom:"2px solid #222", color:"#6366f1"}}>
+                                            <th style={{padding:15, textAlign:"left"}}>Name</th>
+                                            <th style={{padding:15}}>Score</th>
+                                            <th style={{padding:15}}>Percentage</th>
+                                            <th style={{padding:15, textAlign:"right"}}>Time</th>
+                                            <th style={{padding:15, textAlign:"center"}}>Details</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <div className="glass-strong">
-                            <textarea className="input-field" style={{height:150}} placeholder="Q|A|B|C|D|ans" value={bulkText} onChange={e=>setBulkText(e.target.value)} />
-                            <button className="btn-primary" onClick={handleBulkImport}>Save Questions</button>
-                        </div>
-                    )}
+                                    </thead>
+                                    <tbody>
+                                        {results.map((r,i) => (
+                                            <React.Fragment key={i}>
+                                                <tr style={{borderBottom:"1px solid #222"}}>
+                                                    <td style={{padding:15}}>{r.name}</td>
+                                                    <td style={{padding:15, textAlign:"center"}}>{r.score}/{r.total}</td>
+                                                    <td style={{padding:15, textAlign:"center", color:"#4ade80"}}>{r.percentage}%</td>
+                                                    <td style={{padding:15, textAlign:"right", color:"#555", fontSize:12}}>{r.time}</td>
+                                                    <td style={{padding:15, textAlign:"center"}}>
+                                                        <button 
+                                                            style={{background:"#2a2a35", color:"white", padding:"6px 12px", borderRadius:"8px", border:"none", cursor:"pointer", fontSize:12}}
+                                                            onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}
+                                                        >
+                                                            {expandedIndex === i ? "Hide" : "View"}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {expandedIndex === i && (
+                                                    <tr style={{background:"rgba(255,255,255,0.02)"}}>
+                                                        <td colSpan="5" style={{padding:"20px 30px"}}>
+                                                            {r.score === r.total ? (
+                                                                <p style={{color:"#4ade80", textAlign:"center", margin:0}}>Zabardast! Saare jawab sahi hain. 🎉</p>
+                                                            ) : r.wrongAnswers ? (
+                                                                <div>
+                                                                    <h4 style={{color:"#ef4444", marginBottom:15}}>Galat Jawabaat:</h4>
+                                                                    <ul style={{listStyle:"none", padding:0, margin:0}}>
+                                                                        {r.wrongAnswers.map((wa, idx) => (
+                                                                            <li key={idx} style={{marginBottom:15, borderBottom:"1px solid #222", paddingBottom:15}}>
+                                                                                <p style={{color:"#ccc", marginBottom:8, fontSize:15}}><b>Q:</b> {wa.question}</p>
+                                                                                <p style={{color:"#ef4444", margin:"0 0 5px 0", fontSize:14}}>❌ Unka Jawab: {wa.userSelected}</p>
+                                                                                <p style={{color:"#4ade80", margin:0, fontSize:14}}>✅ Sahi Jawab: {wa.correctIs}</p>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </div>
+                                                            ) : <p style={{textAlign:"center"}}>No details.</p>}
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </React.Fragment>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="glass-strong">
+                                <h3>AI Bulk Import (Unlimited)</h3>
+                                <textarea className="input-field" style={{height:200, marginTop:15}} 
+                                    placeholder="Question|OptionA|OptionB|OptionC|OptionD|ans"
+                                    value={bulkText} onChange={e=>setBulkText(e.target.value)} />
+                                <button className="btn-primary" onClick={handleBulkImport}>Save All Questions</button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             );
         }
