@@ -58,7 +58,6 @@
             border: none; border-radius: 12px; cursor: pointer; font-weight: 600;
             transition: 0.2s; margin-bottom: 20px;
         }
-        .btn-danger:hover { background: #dc2626; transform: scale(1.02); }
     </style>
 </head>
 <body class="bg-grid">
@@ -106,7 +105,7 @@
             const [dbAdminPassword, setDbAdminPassword] = useState("admin786");
             const [showPassSettings, setShowPassSettings] = useState(false);
             const [newPassword, setNewPassword] = useState("");
-            const [passClicks, setPassClicks] = useState(0);
+            const [passClicks, setPassClicks] = useState(0); 
 
             const [adminView, setAdminView] = useState("results");
             const [clicks, setClicks] = useState(0);
@@ -115,7 +114,6 @@
 
             useEffect(() => {
                 const db = window.fbDB;
-                if(!db) return;
                 window.fbOnValue(window.fbRef(db, 'questions'), (snapshot) => {
                     const data = snapshot.val();
                     setQuestions(data ? Object.values(data) : []);
@@ -148,7 +146,7 @@
 
             const startQuiz = () => { 
                 if(!name.trim()) return; 
-                if(questions.length === 0) return alert("Questions load ho rahay hain...");
+                if(questions.length === 0) return alert("Sawal load ho rahe hain...");
                 setCurrent(0); setAnswers({}); setScreen("quiz"); 
             };
 
@@ -170,14 +168,10 @@
                 });
                 
                 const entry = { 
-                    name: name.trim(), 
-                    score, 
-                    total: totalToShow, 
+                    name: name.trim(), score, total: totalToShow, 
                     percentage: Math.round((score / totalToShow) * 100), 
-                    time: new Date().toLocaleString(),
-                    wrongAnswers 
+                    time: new Date().toLocaleString(), wrongAnswers 
                 };
-                
                 window.fbPush(window.fbRef(window.fbDB, 'results'), entry);
                 setScreen("done");
             };
@@ -197,16 +191,24 @@
                     });
                     window.fbSet(window.fbRef(window.fbDB, 'questions'), newQs);
                     setBulkText(""); alert("Saved!");
-                } catch(e) { alert("Format: Question|A|B|C|D|ans"); }
+                } catch(e) { alert("Format Error!"); }
+            };
+
+            const updatePassword = () => {
+                if(newPassword.trim().length < 4) return alert("Password too short!");
+                window.fbSet(window.fbRef(window.fbDB, 'settings/adminPassword'), newPassword.trim());
+                alert("Password Updated!");
+                setNewPassword("");
+                setShowPassSettings(false);
             };
 
             if(screen === "home") return (
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:20}}>
                     <div className="glass-strong fade-up" style={{width:"100%", maxWidth:400, textAlign:"center"}}>
-                        <h1 style={{color:"white", fontSize:32, marginBottom:10}}>Quiz Portal</h1>
-                        <input className="input-field" placeholder="Your Name..." onChange={e=>setName(e.target.value)} />
+                        <h1 style={{color:"white", fontSize:32, marginBottom:10}}>Welcome!</h1>
+                        <input className="input-field" placeholder="Full Name..." onChange={e=>setName(e.target.value)} />
                         <button className="btn-primary" onClick={startQuiz}>Start Quiz →</button>
-                        <div onClick={secretClick} style={{marginTop:40, opacity:0.02, cursor:"pointer"}}>● ● ●</div>
+                        <div onClick={secretClick} style={{marginTop:40, opacity:0.01, cursor:"default"}}>● ● ●</div>
                     </div>
                 </div>
             );
@@ -214,9 +216,9 @@
             if(screen === "login") return (
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh"}}>
                     <div className="glass-strong" style={{width:320}}>
-                        <h2 style={{color:"white", marginBottom:20}}>Admin</h2>
+                        <h2 style={{color:"white", marginBottom:20}}>Admin Panel</h2>
                         <input className="input-field" type="password" placeholder="Password..." onChange={e=>setAdminPass(e.target.value)} />
-                        <button className="btn-primary" onClick={() => adminPass === dbAdminPassword ? setScreen("admin") : alert("Wrong!")}>Login</button>
+                        <button className="btn-primary" onClick={() => adminPass === dbAdminPassword ? setScreen("admin") : alert("Wrong Password!")}>Login</button>
                     </div>
                 </div>
             );
@@ -224,11 +226,11 @@
             if(screen === "quiz") return (
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:20}}>
                     <div className="glass-strong fade-up" style={{width:"100%", maxWidth:600}}>
-                        <p style={{color:"#6366f1", marginBottom:10}}>Q {current+1}</p>
+                        <p style={{color:"#6366f1", marginBottom:10}}>Question {current+1}</p>
                         <h3 style={{color:"white", marginBottom:25}}>{questions[current]?.q}</h3>
                         {['a','b','c','d'].map(o => (
                             <button key={o} className={`opt-btn ${selected===o?'selected':''}`} onClick={()=>setSelected(o)}>
-                                {questions[current]?.[o]}
+                                {o.toUpperCase()}) {questions[current]?.[o]}
                             </button>
                         ))}
                         <button className="btn-primary" style={{marginTop:20}} onClick={next} disabled={!selected}>Next</button>
@@ -239,9 +241,9 @@
             if(screen === "done") return (
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", textAlign:"center"}}>
                     <div className="glass-strong fade-up">
-                        <h1 style={{color:"#4ade80"}}>Finished!</h1>
+                        <h1 style={{color:"#4ade80"}}>Done!</h1>
                         <p style={{color:"white", margin:"20px 0"}}>Thank you, {name}.</p>
-                        <button className="btn-primary" onClick={()=>window.location.reload()}>Restart</button>
+                        <button className="btn-primary" onClick={()=>window.location.reload()}>Next Person</button>
                     </div>
                 </div>
             );
@@ -249,42 +251,56 @@
             if(screen === "admin") return (
                 <div style={{padding:20, color:"white", maxWidth:900, margin:"auto"}}>
                     <div style={{display:"flex", justifyContent:"space-between", marginBottom:30}}>
-                        <h2 onClick={triggerPassSettings} style={{userSelect:"none"}}>🛡️ Panel</h2>
-                        <button className="btn-primary" style={{width:"auto"}} onClick={()=>setScreen("home")}>Logout</button>
+                        {/* 5 Clicks Trigger Password Settings */}
+                        <h2 style={{cursor:"default", userSelect:"none"}} onClick={triggerPassSettings}>🛡️ Control Panel</h2>
+                        <button className="btn-primary" style={{width:"auto"}} onClick={() => setScreen("home")}>Logout</button>
                     </div>
-
+                    
                     {showPassSettings && (
-                        <div className="glass-strong fade-up" style={{marginBottom:20, padding:20}}>
-                            <input className="input-field" placeholder="New Password" onChange={e=>setNewPassword(e.target.value)} />
-                            <button className="btn-primary" onClick={()=>{
-                                window.fbSet(window.fbRef(window.fbDB, 'settings/adminPassword'), newPassword);
-                                alert("Changed!"); setShowPassSettings(false);
-                            }}>Save Password</button>
+                        <div className="glass-strong fade-up" style={{marginBottom:30, padding:20, border:"1px solid #a855f7"}}>
+                            <h3 style={{marginBottom:15, color:"#a855f7"}}>Change Password</h3>
+                            <div style={{display:"flex", gap:10}}>
+                                <input className="input-field" style={{marginBottom:0}} type="text" placeholder="New Password..." value={newPassword} onChange={e=>setNewPassword(e.target.value)} />
+                                <button className="btn-primary" style={{width:"auto", padding:"0 20px"}} onClick={updatePassword}>Save</button>
+                            </div>
                         </div>
                     )}
 
-                    <div style={{display:"flex", gap:10, marginBottom:20}}>
-                        <button className="opt-btn" onClick={()=>setAdminView("results")}>Results</button>
-                        <button className="opt-btn" onClick={()=>setAdminView("ai")}>Import</button>
+                    <div style={{display:"flex", gap:10, marginBottom:30}}>
+                        <button className="opt-btn" style={{margin:0, textAlign:"center"}} onClick={()=>setAdminView("results")}>View Results</button>
+                        <button className="opt-btn" style={{margin:0, textAlign:"center"}} onClick={()=>setAdminView("ai")}>AI Import</button>
                     </div>
 
                     {adminView === "results" ? (
                         <div className="glass-strong" style={{overflowX:"auto"}}>
-                            <button className="btn-danger" onClick={()=>window.fbRemove(window.fbRef(window.fbDB, 'results'))}>Clear All</button>
-                            <table style={{width:"100%", textAlign:"left"}}>
-                                {results.map((r, i) => (
-                                    <tr key={i} style={{borderBottom:"1px solid #222"}}>
-                                        <td style={{padding:10}}>{r.name}</td>
-                                        <td style={{padding:10}}>{r.score}/{r.total}</td>
-                                        <td style={{padding:10}}>{r.time}</td>
+                            <button className="btn-danger" onClick={() => window.confirm("Delete all?") && window.fbRemove(window.fbRef(window.fbDB, 'results'))}>Clear All</button>
+                            <table style={{width:"100%", borderCollapse:"collapse"}}>
+                                <thead>
+                                    <tr style={{borderBottom:"2px solid #222", color:"#6366f1"}}>
+                                        <th style={{padding:10}}>Name</th>
+                                        <th style={{padding:10}}>Score</th>
+                                        <th style={{padding:10}}>Time</th>
+                                        <th style={{padding:10}}>Action</th>
                                     </tr>
-                                ))}
+                                </thead>
+                                <tbody>
+                                    {results.map((r,i) => (
+                                        <tr key={i} style={{borderBottom:"1px solid #222"}}>
+                                            <td style={{padding:10}}>{r.name}</td>
+                                            <td style={{padding:10}}>{r.score}/{r.total}</td>
+                                            <td style={{padding:10}}>{r.time}</td>
+                                            <td style={{padding:10}}>
+                                                <button onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}>View</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
                             </table>
                         </div>
                     ) : (
                         <div className="glass-strong">
-                            <textarea className="input-field" style={{height:150}} value={bulkText} onChange={e=>setBulkText(e.target.value)} placeholder="Q|A|B|C|D|ans" />
-                            <button className="btn-primary" onClick={handleBulkImport}>Import Questions</button>
+                            <textarea className="input-field" style={{height:150}} placeholder="Q|A|B|C|D|ans" value={bulkText} onChange={e=>setBulkText(e.target.value)} />
+                            <button className="btn-primary" onClick={handleBulkImport}>Save Questions</button>
                         </div>
                     )}
                 </div>
