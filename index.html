@@ -6,7 +6,7 @@
     <title>Smart Quiz Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
@@ -68,7 +68,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Aapka Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBUUVU_-RNoEXk-M-sw72pzg0IwzvtcgaM",
             authDomain: "quiz-e9e15.firebaseapp.com",
@@ -103,11 +102,11 @@
             const [answers, setAnswers] = useState({});
             const [selected, setSelected] = useState(null);
             
-            // Password States
             const [adminPass, setAdminPass] = useState("");
-            const [dbAdminPassword, setDbAdminPassword] = useState("admin786"); // Default password
+            const [dbAdminPassword, setDbAdminPassword] = useState("admin786");
             const [showPassSettings, setShowPassSettings] = useState(false);
             const [newPassword, setNewPassword] = useState("");
+            const [passClicks, setPassClicks] = useState(0); // Counter for password settings
 
             const [adminView, setAdminView] = useState("results");
             const [clicks, setClicks] = useState(0);
@@ -128,7 +127,6 @@
                     const data = snapshot.val();
                     if(data) setDisplayLimit(data);
                 });
-                // Fetch dynamic password from Firebase
                 window.fbOnValue(window.fbRef(db, 'settings/adminPassword'), (snapshot) => {
                     const data = snapshot.val();
                     if(data) setDbAdminPassword(data);
@@ -137,6 +135,17 @@
 
             const secretClick = () => { setClicks(c => { if(c+1 >= 5) { setScreen("login"); return 0; } return c+1; }); };
             
+            // Hidden password setting trigger (5 taps)
+            const triggerPassSettings = () => {
+                setPassClicks(prev => {
+                    if(prev + 1 >= 5) {
+                        setShowPassSettings(!showPassSettings);
+                        return 0;
+                    }
+                    return prev + 1;
+                });
+            };
+
             const startQuiz = () => { 
                 if(!name.trim()) return; 
                 if(questions.length === 0) return alert("Sawal load ho rahe hain...");
@@ -190,14 +199,14 @@
                         return { id: Date.now() + i, q:q.trim(), a:a.trim(), b:b.trim(), c:c.trim(), d:d.trim(), ans:ans.trim().toLowerCase() };
                     });
                     window.fbSet(window.fbRef(window.fbDB, 'questions'), newQs);
-                    setBulkText(""); alert("Zabardast! Saare sawal save ho gaye hain.");
-                } catch(e) { alert("Format galti! Question|A|B|C|D|ans use karein."); }
+                    setBulkText(""); alert("Saare sawal save ho gaye hain.");
+                } catch(e) { alert("Format galti!"); }
             };
 
             const updatePassword = () => {
-                if(newPassword.trim().length < 4) return alert("Password kam az kam 4 characters ka hona chahiye.");
+                if(newPassword.trim().length < 4) return alert("Password chota hai.");
                 window.fbSet(window.fbRef(window.fbDB, 'settings/adminPassword'), newPassword.trim());
-                alert("Password kamyabi se change ho gaya!");
+                alert("Password Updated!");
                 setNewPassword("");
                 setShowPassSettings(false);
             };
@@ -219,8 +228,7 @@
                     <div className="glass-strong" style={{width:320}}>
                         <h2 style={{color:"white", marginBottom:20}}>Admin Panel</h2>
                         <input className="input-field" type="password" placeholder="Password..." onChange={e=>setAdminPass(e.target.value)} />
-                        {/* Yahan dbAdminPassword check ho raha hai */}
-                        <button className="btn-primary" onClick={() => adminPass === dbAdminPassword ? setScreen("admin") : alert("Galat Password!")}>Login</button>
+                        <button className="btn-primary" onClick={() => adminPass === dbAdminPassword ? setScreen("admin") : alert("Wrong Password!")}>Login</button>
                     </div>
                 </div>
             );
@@ -245,7 +253,6 @@
                     <div className="glass-strong fade-up">
                         <h1 style={{color:"#4ade80", fontSize:40}}>Shukriya!</h1>
                         <p style={{color:"white", margin:"20px 0"}}>{name}, aapka quiz save ho gaya hai.</p>
-                        <p style={{color:"#888", marginBottom:30}}>Results group mein send kar diye jayenge.</p>
                         <button className="btn-primary" onClick={()=>window.location.reload()}>دوسرا شخص →</button>
                     </div>
                 </div>
@@ -255,17 +262,16 @@
                 <div style={{padding:40, color:"white"}}>
                     <div style={{maxWidth:900, margin:"auto"}}>
                         <div style={{display:"flex", justifyContent:"space-between", marginBottom:30}}>
-                            {/* Hidden Setting: Control Panel par click karne se show/hide hoga */}
-                            <h2 style={{cursor:"pointer", userSelect:"none"}} onClick={() => setShowPassSettings(!showPassSettings)}>🛡️ Control Panel</h2>
-                            <button className="btn-primary" style={{width:"auto", padding:"8px 20px"}} onClick={() => {setScreen("home"); setAdminPass("");}}>Logout</button>
+                            {/* Yahan 5 taps chahiye settings kholne ke liye */}
+                            <h2 style={{cursor:"default", userSelect:"none"}} onClick={triggerPassSettings}>🛡️ Control Panel</h2>
+                            <button className="btn-primary" style={{width:"auto", padding:"8px 20px"}} onClick={() => {setScreen("home"); setAdminPass(""); setPassClicks(0);}}>Logout</button>
                         </div>
                         
-                        {/* Hidden Password Setting Area */}
                         {showPassSettings && (
-                            <div className="glass-strong fade-up" style={{marginBottom:30, padding:20}}>
-                                <h3 style={{marginBottom:15, color:"#a855f7"}}>Admin Password Change</h3>
+                            <div className="glass-strong fade-up" style={{marginBottom:30, padding:20, border:"1px solid #a855f7"}}>
+                                <h3 style={{marginBottom:15, color:"#a855f7"}}>Change Password</h3>
                                 <div style={{display:"flex", gap:10}}>
-                                    <input className="input-field" style={{marginBottom:0}} type="text" placeholder="Naya Password likhein..." value={newPassword} onChange={e=>setNewPassword(e.target.value)} />
+                                    <input className="input-field" style={{marginBottom:0}} type="text" placeholder="New Password..." value={newPassword} onChange={e=>setNewPassword(e.target.value)} />
                                     <button className="btn-primary" style={{width:"auto", padding:"0 20px"}} onClick={updatePassword}>Save</button>
                                 </div>
                             </div>
@@ -278,12 +284,7 @@
 
                         {adminView === "results" ? (
                             <div className="glass-strong" style={{padding:20}}>
-                                <button className="btn-danger" onClick={() => {
-                                    if(window.confirm("Kiya aap tamam results delete karna chahte hain?")) {
-                                        window.fbRemove(window.fbRef(window.fbDB, 'results'));
-                                    }
-                                }}>🗑️ Clear All Results</button>
-
+                                <button className="btn-danger" onClick={() => window.confirm("Delete all?") && window.fbRemove(window.fbRef(window.fbDB, 'results'))}>🗑️ Clear Results</button>
                                 <table style={{width:"100%", borderCollapse:"collapse"}}>
                                     <thead>
                                         <tr style={{borderBottom:"2px solid #222", color:"#6366f1"}}>
@@ -304,7 +305,7 @@
                                                     <td style={{padding:15, textAlign:"right", color:"#555", fontSize:12}}>{r.time}</td>
                                                     <td style={{padding:15, textAlign:"center"}}>
                                                         <button 
-                                                            style={{background:"#2a2a35", color:"white", padding:"6px 12px", borderRadius:"8px", border:"none", cursor:"pointer", fontSize:12}}
+                                                            style={{background:"#2a2a35", color:"white", padding:"6px 12px", borderRadius:"8px", border:"none", cursor:"pointer"}}
                                                             onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}
                                                         >
                                                             {expandedIndex === i ? "Hide" : "View"}
@@ -314,22 +315,18 @@
                                                 {expandedIndex === i && (
                                                     <tr style={{background:"rgba(255,255,255,0.02)"}}>
                                                         <td colSpan="5" style={{padding:"20px 30px"}}>
-                                                            {r.score === r.total ? (
-                                                                <p style={{color:"#4ade80", textAlign:"center", margin:0}}>Zabardast! Saare jawab sahi hain. 🎉</p>
-                                                            ) : r.wrongAnswers ? (
+                                                            {r.wrongAnswers ? (
                                                                 <div>
-                                                                    <h4 style={{color:"#ef4444", marginBottom:15}}>Galat Jawabaat:</h4>
-                                                                    <ul style={{listStyle:"none", padding:0, margin:0}}>
-                                                                        {r.wrongAnswers.map((wa, idx) => (
-                                                                            <li key={idx} style={{marginBottom:15, borderBottom:"1px solid #222", paddingBottom:15}}>
-                                                                                <p style={{color:"#ccc", marginBottom:8, fontSize:15}}><b>Q:</b> {wa.question}</p>
-                                                                                <p style={{color:"#ef4444", margin:"0 0 5px 0", fontSize:14}}>❌ Unka Jawab: {wa.userSelected}</p>
-                                                                                <p style={{color:"#4ade80", margin:0, fontSize:14}}>✅ Sahi Jawab: {wa.correctIs}</p>
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
+                                                                    <h4 style={{color:"#ef4444", marginBottom:15}}>Mistakes:</h4>
+                                                                    {r.wrongAnswers.map((wa, idx) => (
+                                                                        <div key={idx} style={{marginBottom:15}}>
+                                                                            <p><b>Q:</b> {wa.question}</p>
+                                                                            <p style={{color:"#ef4444"}}>User: {wa.userSelected}</p>
+                                                                            <p style={{color:"#4ade80"}}>Correct: {wa.correctIs}</p>
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
-                                                            ) : <p style={{textAlign:"center"}}>No details.</p>}
+                                                            ) : <p>All Correct! 🎉</p>}
                                                         </td>
                                                     </tr>
                                                 )}
@@ -340,11 +337,11 @@
                             </div>
                         ) : (
                             <div className="glass-strong">
-                                <h3>AI Bulk Import (Unlimited)</h3>
+                                <h3>AI Bulk Import</h3>
                                 <textarea className="input-field" style={{height:200, marginTop:15}} 
-                                    placeholder="Question|OptionA|OptionB|OptionC|OptionD|ans"
+                                    placeholder="Question|A|B|C|D|ans"
                                     value={bulkText} onChange={e=>setBulkText(e.target.value)} />
-                                <button className="btn-primary" onClick={handleBulkImport}>Save All Questions</button>
+                                <button className="btn-primary" onClick={handleBulkImport}>Save Questions</button>
                             </div>
                         )}
                     </div>
